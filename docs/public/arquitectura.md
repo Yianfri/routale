@@ -12,10 +12,10 @@ Angular consume la API desde Mi copia para sesión y copias explícitas; no hay
 sincronización automática. IndexedDB conserva el cuaderno de trabajo sin red.
 
 El componente raíz coordina carga, selección del día, importación y navegación.
-`features/trip` presenta logística y diario; `features/diary` maneja el formulario
-y su borrador. Dominio puro calcula kilómetros, valida referencias y crea/edita
-notas. `TripRepository` adapta IndexedDB mediante idb; `CuadernoService` coordina
-almacenamiento, lectura de demo, respaldo y restauración.
+`shared/navigation` adapta la misma barra a escritorio y móvil. Los formularios de
+`features/trip` y `features/diary` comparten `shared/editor-panel`. El dominio calcula
+kilómetros, valida referencias y aplica cambios a notas y logística. `TripRepository`
+adapta IndexedDB mediante idb y `CuadernoService` coordina lectura, guardado y respaldos.
 
 La jornada real es única por viaje/fecha. Varias notas comparten kilómetros;
 agregar una nota no suma distancia dos veces ni completa una etapa prevista.
@@ -27,6 +27,10 @@ fechas válidas e integridad SHA-256 de fuentes. Se preservan campos desconocido
 en respaldos compatibles. Jornada y nota se guardan en una transacción y se
 confirma éxito después de completarla. Importar demo repetidamente conserva
 ediciones propias; restaurar un viaje requiere revisión y reemplaza esa copia.
+Al abrir el editor de logística se lee la revisión local. El guardado compara
+el token y actualiza la jornada y la revisión en la misma transacción. Si el
+cuaderno cambió, se conserva lo escrito en el formulario y se pide reabrir la
+jornada para revisar el estado actual.
 
 PC y Android usan la misma presentación responsive, tokens claros/oscuros,
 controles nativos, foco visible y movimiento reducido. Angular Material sigue

@@ -274,7 +274,7 @@ test('mantiene el uso local sin API y recupera la sesión y las copias tras rein
     await test.step('Detener la API y conservar la edición local', async () => {
       await localStack?.stopApi();
       apiStopped = true;
-      await clickSection(page, 'Jornada');
+      await clickSection(page, 'Ruta');
       await addNote(page, 'Nota guardada mientras la API estaba detenida');
       await clickSection(page, 'Diario');
       await expect(page.getByText('Nota guardada mientras la API estaba detenida')).toBeVisible();
@@ -342,7 +342,7 @@ test('bloquea otra cuenta en el mismo perfil y conserva el cuaderno local', asyn
     await expect(
       page.getByRole('button', { name: 'Revisar recuperación', exact: true }),
     ).toHaveCount(0);
-    await clickSection(page, 'Jornada');
+    await clickSection(page, 'Ruta');
     await expect(page.getByRole('heading', { name: 'Mi itinerario' })).toBeVisible();
   } finally {
     await page.close();
@@ -360,12 +360,15 @@ async function openProfile(browser: Browser, name: string): Promise<Page> {
 
 async function openWelcome(page: Page): Promise<void> {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Planifica tu viaje' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Antes de partir/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Mi copia', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
 }
 
 async function importDemo(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Revisar viaje de ejemplo' }).click();
+  const back = page.getByRole('button', { name: /Volver al inicio/ });
+  if (await back.isVisible()) await back.click();
+  await page.getByRole('button', { name: 'Explorar viaje de ejemplo' }).click();
   await expect(page.getByRole('heading', { name: 'Viaje de ejemplo' })).toBeVisible();
   await page.getByRole('button', { name: 'Importar este plan' }).click();
   await expect(page.getByRole('heading', { name: 'Mi itinerario' })).toBeVisible();
@@ -415,7 +418,7 @@ async function addNote(page: Page, text: string): Promise<void> {
   ).toBeVisible();
 }
 
-async function clickSection(page: Page, label: 'Diario' | 'Jornada'): Promise<void> {
+async function clickSection(page: Page, label: 'Diario' | 'Ruta'): Promise<void> {
   const buttons = page.getByRole('button', { name: label, exact: true });
   for (const button of await buttons.all()) {
     if (await button.isVisible()) {

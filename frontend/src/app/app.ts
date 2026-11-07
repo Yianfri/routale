@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal, viewChild, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgOptimizedImage, NgTemplateOutlet } from '@angular/common';
 import { SwUpdate } from '@angular/service-worker';
 import { CuadernoService } from './core/storage/cuaderno.service';
 import {
@@ -16,6 +17,10 @@ import { DiaryGroup, DiaryView } from './features/diary/diary-view';
 import { CopyView } from './features/copy/copy-view';
 import { RemoteCopiesView, RemoteLoginDetails } from './features/copy/remote-copies-view';
 import { DayDetail } from './features/trip/day-detail';
+import { DayEditor } from './features/trip/day-editor';
+import type { DayLogistics } from './core/domain/planned-day';
+import { EditorPanel } from './shared/editor-panel';
+import { Navigation, type Destination } from './shared/navigation';
 import { dateLabel, distance } from './shared/display';
 import { PwaInstallService, PWA_INSTALL_GUIDANCE } from './shared/pwa-install';
 import { RemoteCopiesService } from './core/storage/remote-copies.service';
@@ -23,7 +28,19 @@ import { RemoteCopiesService } from './core/storage/remote-copies.service';
 type Section = 'day' | 'itinerary' | 'diary' | 'copy';
 
 @Component({
-  imports: [FormsModule, NoteForm, DayDetail, DiaryView, CopyView, RemoteCopiesView],
+  imports: [
+    FormsModule,
+    NgOptimizedImage,
+    NgTemplateOutlet,
+    Navigation,
+    EditorPanel,
+    NoteForm,
+    DayDetail,
+    DayEditor,
+    DiaryView,
+    CopyView,
+    RemoteCopiesView,
+  ],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -42,8 +59,15 @@ export class App implements OnInit, OnDestroy {
   readonly block = signal(0);
   readonly openId = signal<string | null>(null);
   readonly section = signal<Section>('day');
-  readonly returnSection = signal<Section>('day');
   readonly note = signal<NoteInput | null>(null);
+  readonly editingDay = signal<{ day: PlannedDay; token: string; trigger: HTMLElement } | null>(
+    null,
+  );
+  readonly editorOpen = computed(() => !!(this.note() || this.editingDay()));
+  readonly destination = computed<Destination>(() => {
+    const section = this.section();
+    return section === 'day' || section === 'itinerary' ? 'route' : section;
+  });
   readonly online = signal(navigator.onLine);
   readonly offlineReady = signal(false);
   readonly updateReady = signal(false);
@@ -326,6 +350,10 @@ export class App implements OnInit, OnDestroy {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
+  navigate(destination: Destination): void {
+    this.goTo(destination === 'route' ? 'itinerary' : destination);
+  }
+
   checkPreparation(): void {
     void this.action(() => this.checkOffline());
   }
@@ -365,15 +393,16 @@ export class App implements OnInit, OnDestroy {
   }
 
   closeDetail(): void {
-    this.openId.set(null);
-    if (window.matchMedia('(max-width: 799px)').matches) this.section.set('itinerary');
+    this.section.set('itinerary');
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>('.day-button[aria-current="true"]')?.focus();
+    });
   }
 
   startNote(day: PlannedDay, entry?: DiaryEntry): void {
     const actual = entry
       ? this.cuaderno.data()?.actualDays.find((candidate) => candidate.id === entry.actualDayId)
       : this.cuaderno.data()?.actualDays.find((candidate) => candidate.date === day.date);
-    this.returnSection.set(this.section());
     this.note.set({
       date: actual?.date ?? day.date,
       cyclingKm: actual?.cyclingKm ?? null,
@@ -383,7 +412,6 @@ export class App implements OnInit, OnDestroy {
     });
     this.error.set('');
     this.message.set('');
-    window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   editEntry(entry: DiaryEntry): void {
@@ -393,7 +421,6 @@ export class App implements OnInit, OnDestroy {
       this.error.set('No encontramos la jornada real de esta nota. Tu copia no cambió.');
       return;
     }
-    this.returnSection.set(this.section());
     this.note.set({
       date: actual.date,
       cyclingKm: actual.cyclingKm,
@@ -403,14 +430,11 @@ export class App implements OnInit, OnDestroy {
     });
     this.error.set('');
     this.message.set('');
-    window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   closeNote(): void {
     this.note.set(null);
     this.error.set('');
-    this.section.set(this.returnSection());
-    window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   save(input: NoteInput): Promise<void> {
@@ -418,9 +442,34 @@ export class App implements OnInit, OnDestroy {
       await this.cuaderno.save(input);
       this.form()?.clearDraft();
       this.note.set(null);
-      this.section.set(this.returnSection());
       this.message.set('Guardado en este dispositivo');
-      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+  }
+
+  openDayEditor(dayId: string, trigger: HTMLElement): Promise<void> {
+    if (this.busy() || this.editorOpen()) return Promise.resolve();
+    return this.action(async () => {
+      const snapshot = await this.cuaderno.snapshot();
+      const day = snapshot?.data.plannedDays.find(
+        (item) => item.id === dayId && item.planId === snapshot.data.trip.activePlanId,
+      );
+      if (!snapshot || !day) throw new Error('No encontramos la jornada en el plan activo.');
+      this.editingDay.set({ day, token: snapshot.token, trigger });
+    });
+  }
+
+  closeDayEditor(): void {
+    this.editingDay.set(null);
+    this.error.set('');
+  }
+
+  saveDay(input: DayLogistics): Promise<void> {
+    return this.action(async () => {
+      const editing = this.editingDay();
+      if (!editing) return;
+      await this.cuaderno.saveDayLogistics(editing.day.id, editing.token, input);
+      this.editingDay.set(null);
+      this.message.set('Jornada guardada en este dispositivo');
     });
   }
 
@@ -434,6 +483,6 @@ export class App implements OnInit, OnDestroy {
   }
 
   refresh(): void {
-    if (!this.note()) location.reload();
+    if (!this.editorOpen()) location.reload();
   }
 }

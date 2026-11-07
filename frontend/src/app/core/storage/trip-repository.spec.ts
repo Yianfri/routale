@@ -74,6 +74,32 @@ describe('TripRepository: revisión local y migración', () => {
     expect(after?.token).toBe(before?.token);
   });
 
+  it('edita la logística y conserva el respaldo; rechaza una revisión anterior', async () => {
+    const original = structuredClone(seed);
+    const firstDay = original.data.plannedDays[0];
+    Object.assign(firstDay.logistics, { extension: { preserve: true } });
+    const initial = await repository.restoreCAS(original, null);
+    const edits = { ...firstDay.logistics, lodgingStatusText: 'Confirmado' };
+    await repository.saveDayLogistics(original.data.trip.id, firstDay.id, initial.token, edits);
+
+    await expect(
+      repository.saveDayLogistics(original.data.trip.id, firstDay.id, initial.token, {
+        ...edits,
+        lodgingStatusText: 'Sin reservar',
+      }),
+    ).rejects.toThrow('El cuaderno cambió');
+    const saved = await repository.snapshot(original.data.trip.id);
+    expect(saved?.revision).toBe(initial.revision + 1);
+    expect(saved?.data.plannedDays[0].logistics).toMatchObject({
+      lodgingStatusText: 'Confirmado',
+      extension: { preserve: true },
+    });
+    expect(saved?.data.plannedDays.slice(1)).toEqual(original.data.plannedDays.slice(1));
+    expect(saved?.data.sourceSnapshots).toEqual(original.data.sourceSnapshots);
+    expect(saved?.data.diaryEntries).toEqual(original.data.diaryEntries);
+    await expect(validateBackup(saved?.backup)).resolves.toEqual(saved?.backup);
+  });
+
   it('restaura por compare-and-swap, archiva lo reemplazado y conserva extensiones raíz', async () => {
     const original = structuredClone(seed);
     original['customMetadata'] = { origin: 'importación', nested: { keep: true } };

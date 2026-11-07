@@ -5,13 +5,13 @@ import { validateBackup } from '../src/app/core/domain/validation';
 
 async function importPlan(page: import('@playwright/test').Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Revisar viaje de ejemplo', exact: true }).click();
+  await page.getByRole('button', { name: 'Explorar viaje de ejemplo', exact: true }).click();
   await expect(page.getByText(/16 jornadas · 0 notas/)).toBeVisible();
   await page.getByRole('button', { name: 'Importar este plan', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Jornada', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ruta', exact: true })).toBeVisible();
 }
 async function openThird(page: import('@playwright/test').Page) {
-  await page.getByRole('button', { name: 'Itinerario', exact: true }).click();
+  await page.getByRole('button', { name: 'Ruta', exact: true }).click();
   await page.getByRole('button', { name: /Pueblo B → Pueblo C/ }).click();
   await expect(page.getByRole('button', { name: 'Anotar este día' })).toBeVisible();
 }
@@ -110,7 +110,7 @@ test('PWA: recarga y guardado sin red', async ({ page, context }) => {
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Jornada', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ruta', exact: true })).toBeVisible();
   await expect(page.locator('.route-cover')).toBeVisible();
   expect(
     await page.locator('.route-cover').evaluate((image: HTMLImageElement) => image.naturalWidth),
@@ -136,7 +136,7 @@ for (const width of [320, 390, 736, 1024, 1440])
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await importPlan(page);
-    await page.getByRole('button', { name: 'Itinerario', exact: true }).click();
+    await page.getByRole('button', { name: 'Ruta', exact: true }).click();
     expect(await page.locator('.day-button').count()).toBe(7);
     await page.getByRole('button', { name: 'Bloque siguiente' }).click();
     await expect(page.getByText('Mostrando 8–14 de 16 jornadas', { exact: true })).toBeVisible();
@@ -145,7 +145,7 @@ for (const width of [320, 390, 736, 1024, 1440])
     await expect(page.locator('#selected-day-title')).toHaveText('Pueblo B → Pueblo C');
     if (width < 800) {
       await expect(page.locator('#selected-day-title')).toBeFocused();
-      await page.getByRole('button', { name: 'Itinerario', exact: true }).click();
+      await page.getByRole('button', { name: 'Ruta', exact: true }).click();
     }
     const fourth = page.getByRole('button', { name: /Etapa de ejemplo 4/ });
     await fourth.focus();
@@ -179,13 +179,13 @@ for (const width of [320, 390, 736, 1024, 1440])
 test('navegación por jornada cruza bloques y el diario conserva la edición', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await importPlan(page);
-  await page.getByRole('button', { name: 'Itinerario', exact: true }).click();
+  await page.getByRole('button', { name: 'Ruta', exact: true }).click();
   await page.getByRole('combobox', { name: 'Ir a una fecha' }).selectOption('2030-06-07');
   await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
   await expect(page.locator('#selected-day-title')).toHaveText('Etapa de ejemplo 8');
-  await page.getByRole('button', { name: 'Itinerario', exact: true }).click();
+  await page.getByRole('button', { name: 'Ruta', exact: true }).click();
   await expect(page.getByText('Mostrando 8–14 de 16 jornadas', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Jornada', exact: true }).click();
+  await page.getByRole('button', { name: /Etapa de ejemplo 8/ }).click();
   await page.getByRole('button', { name: 'Anotar este día', exact: true }).click();
   await page.getByRole('textbox', { name: 'Tu nota', exact: true }).fill('Borrador del día ocho');
   await page.getByRole('button', { name: 'Volver', exact: true }).click();
@@ -193,7 +193,8 @@ test('navegación por jornada cruza bloques y el diario conserva la edición', a
   await page.getByRole('button', { name: 'Diario', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Aún no hay entradas' })).toBeVisible();
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
-  await page.getByRole('button', { name: 'Jornada', exact: true }).click();
+  await page.getByRole('button', { name: 'Ruta', exact: true }).click();
+  await page.getByRole('button', { name: /Etapa de ejemplo 8/ }).click();
   await page.getByRole('button', { name: 'Anotar este día', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Tu nota', exact: true })).toHaveValue(
     'Borrador del día ocho',
@@ -212,6 +213,32 @@ test('navegación por jornada cruza bloques y el diario conserva la edición', a
   await expect(page.getByText('Entrada editada desde el diario', { exact: true })).toBeVisible();
   await expect(page.getByText('0 km reales', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/diario-390.png', fullPage: true });
+});
+
+test('edita una jornada en el panel móvil y conserva los cambios tras recargar', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 780 });
+  await importPlan(page);
+  await page.getByRole('combobox', { name: 'Apariencia' }).selectOption('dark');
+  const edit = page.getByRole('button', { name: 'Editar jornada', exact: true });
+  await edit.click();
+  const panel = page.getByRole('dialog', { name: 'Editar jornada' });
+  await expect(panel).toBeVisible();
+  await panel.getByLabel('Dónde dormir').fill('Campamento de ejemplo');
+  await panel.getByLabel('Estado de la reserva').fill('Confirmado');
+  await panel.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(panel).toHaveCount(0);
+  await expect(edit).toBeFocused();
+  await expect(page.getByText('Campamento de ejemplo', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('combobox', { name: 'Apariencia' })).toHaveValue('dark');
+  await expect(page.getByText('Confirmado', { exact: true })).toBeVisible();
+  await edit.click();
+  await panel.getByLabel('Estado de la reserva').fill('Sin reservar');
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+  await expect(page.getByText('Confirmado', { exact: true })).toBeVisible();
 });
 
 test('PWA: manifiesto e iconos reales y respuestas de instalación simuladas', async ({ page }) => {

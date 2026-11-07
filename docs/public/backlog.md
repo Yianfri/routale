@@ -8,6 +8,10 @@ la cantidad actual de pruebas ni el estado del servidor personal.
 
 - Angular/PWA responsive para escritorio, tablet y móvil, tema claro/oscuro,
   movimiento reducido, teclado y controles accesibles. [Dirección visual](direccion-visual.md).
+- Bienvenida con paisaje y navegación unificada en Ruta, Diario y Mi copia.
+  Ruta permite editar alojamiento, reserva, abastecimiento y plan B de una jornada
+  existente, con guardado local y comprobación de revisión. El diario y la edición
+  del plan usan panel lateral en escritorio y pantalla completa en móvil.
 - Demo ficticia; importación y restauración de respaldos con validación y revisión.
 - Itinerario por bloques de hasta siete jornadas, consulta de alojamiento y
   abastecimiento, navegación anterior/siguiente y selección de fecha.
@@ -55,15 +59,15 @@ personal ni Android físico.
 
 | Prioridad | Entrega pendiente | Criterio para completarla |
 | --- | --- | --- |
-| 1 | Editor de jornadas y del viaje | Editar alojamiento/estado, abastecimiento, traslados, plan B y presupuesto; después agregar/modificar jornadas y etapas con validación. Hoy solo se editan notas y kilómetros reales; el plan se incorpora desde un respaldo o la demo. Conservar IDs, fuentes originales y extensiones. |
+| 1 | Completar el editor de jornadas y organizar el viaje | Ampliar la edición a traslados y presupuesto. Agregar, mover y reprogramar jornadas y etapas con una vista previa del impacto. Conservar IDs, fuentes originales, extensiones y el diario por fecha real. |
 | 2 | Sincronización automática cuando sea posible | Con la app abierta, conexión y servidor disponible, enviar cambios pendientes y comprobar cambios remotos de la cuenta vinculada. Conservar trabajo offline, detectar conflictos y no reemplazar ediciones sin revisión. Requiere una entrega específica; aún no está implementada. |
 | 3 | Selector de viajes locales | La persistencia ya conserva varios viajes; falta elegir el activo y conservar su selección sin mezclar notas, borradores ni asociaciones remotas. |
 | 4 | Catálogo editable de lugares | Crear y editar lugares y sus vínculos con jornadas, sin inventar coordenadas ni perder datos desconocidos. |
 | 5 | Consultar copias locales reemplazadas | Exponer el archivo ya conservado al recuperar, con vista previa y comprobación de ediciones concurrentes antes de restaurar. |
 | 6 | Herramientas de respaldo operativo | Respaldar y restaurar SQLite y claves consistentemente en un entorno aislado y comprobar integridad, sesión y lectura antes de utilizarlas en producción. |
 
-El orden es una propuesta para las próximas PR. El editor y la sincronización
-automática son objetivos solicitados, no capacidades ya entregadas. La sincronización
+El orden es una propuesta para las próximas PR. La edición local de logística es
+la primera parte del editor. La sincronización automática sigue pendiente y
 necesita activación explícita por perfil/cuenta, cambios pendientes durables,
 precondiciones de revisión, recuperación de respuestas perdidas y reintentos acotados.
 Volver a tener internet no demuestra que el servidor responda. Con la app cerrada,
@@ -73,7 +77,7 @@ Mapa integrado, proveedor y disponibilidad de cartografía sin red necesitan una
 decisión explícita y otra entrega. Historial remoto de versiones, colaboración,
 gestión pública de cuentas y empaquetado nativo se priorizarán según el uso real.
 
-## Mantenibilidad antes del editor y la sincronización
+## Mantenibilidad del editor y las copias
 
 La revisión de responsabilidades identifica estos cambios acotados para próximas
 PR. Son pendientes de refactorización, no defectos de seguridad confirmados ni
@@ -90,9 +94,9 @@ motivo para reescribir toda la aplicación:
 - Separar la actividad remota del bloqueo general en `App.remoteAction` antes de
   agregar trabajo en segundo plano. Un envío lento no debe impedir escribir y
   guardar una nota local; probar latencia, desconexión y edición durante el envío.
-- Implementar las futuras ediciones del plan como operaciones de dominio y
-  repositorio, con una transacción y comprobación de versión local. Los componentes
-  editan formularios, no IndexedDB directamente. Probar dos pestañas, datos inválidos
+- Implementar las futuras ediciones del plan como la edición de logística, con
+  operaciones de dominio y repositorio, transacción y comprobación de versión
+  local. Los componentes editan formularios. Probar dos pestañas, datos inválidos
   y conservación de fuentes, extensiones y asociaciones remotas.
 
 ## Revisión de seguridad pendiente

@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Backup, NoteInput, TripData } from '../domain/model';
+import type { DayLogistics } from '../domain/planned-day';
 import type { LocalTripSnapshot } from './trip-repository';
 
 @Injectable({ providedIn: 'root' })
@@ -53,6 +54,15 @@ export class CuadernoService {
     const restored = await repository.restore(backup);
     const snapshot = await repository.snapshot(restored.trip.id);
     this.data.set(snapshot?.data ?? restored);
+    this.localToken.set(snapshot?.token ?? null);
+  }
+  async saveDayLogistics(dayId: string, expectedToken: string, input: DayLogistics): Promise<void> {
+    const data = this.data();
+    if (!data) throw new Error('Importa primero tu plan.');
+    const repository = await this.repository;
+    const saved = await repository.saveDayLogistics(data.trip.id, dayId, expectedToken, input);
+    const snapshot = await repository.snapshot(data.trip.id);
+    this.data.set(snapshot?.data ?? saved);
     this.localToken.set(snapshot?.token ?? null);
   }
   async snapshot(tripId?: string): Promise<LocalTripSnapshot | null> {

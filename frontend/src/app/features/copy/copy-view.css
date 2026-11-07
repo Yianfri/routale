@@ -12,13 +12,11 @@
 .copy-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
+  column-gap: 24px;
 }
 .copy-card {
-  padding: 20px;
-  background: var(--paper);
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
 }
 .copy-card h2 {
   font-size: 1.25rem;
@@ -73,7 +71,7 @@
     grid-template-columns: 1fr;
   }
   .copy-card {
-    padding: 18px;
+    padding: 14px 0;
   }
   .demo-action {
     align-items: flex-start;

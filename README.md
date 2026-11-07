@@ -2,9 +2,10 @@
 
 Aplicación Angular/PWA para planificar viajes y llevar un diario, adaptable a PC y Android.
 
-La versión actual permite consultar un itinerario por bloques, abrir el detalle
-de un día, crear y editar notas con kilómetros diarios, recuperar borradores y
-exportar/restaurar una copia completa. Incluye una **demo ficticia** para probarla.
+La versión actual permite consultar el itinerario en **Ruta**, editar el alojamiento,
+el estado de la reserva, el abastecimiento y el plan B de una jornada, y escribir
+notas con kilómetros reales y borrador. Incluye una **demo ficticia** para probarla
+y permite exportar o restaurar un respaldo completo.
 Mi copia conecta con una API privada para guardar y recuperar copias manualmente.
 El [estado y siguientes entregas](docs/public/backlog.md) distingue código disponible,
 funciones pendientes y comprobaciones que requieren dispositivos o servidor reales.
@@ -49,7 +50,7 @@ npm ci
 npm start
 ```
 
-Abrir `http://localhost:4200`. Elegir **Revisar viaje de ejemplo** o **Traer un respaldo**.
+Abrir `http://localhost:4200`. Elegir **Explorar viaje de ejemplo** o **Traer un respaldo**.
 Para probar la PWA compilada, detener desarrollo y ejecutar:
 
 ```sh

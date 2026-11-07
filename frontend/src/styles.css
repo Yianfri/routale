@@ -25,15 +25,14 @@ button,
   background: var(--paper);
   padding: 10px 16px;
   cursor: pointer;
-  transition:
-    background 160ms ease,
-    color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+  transition: transform 150ms ease;
 }
 button:hover,
 .file-button:hover {
   background: var(--active);
+}
+button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 button:disabled {
   cursor: default;
@@ -85,14 +84,14 @@ p {
   color: var(--muted);
 }
 .primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--primary-fill);
+  border-color: var(--primary-fill);
   color: var(--button-ink);
   font-weight: 600;
   min-height: 48px;
 }
 .primary:hover {
-  background: var(--accent-hover);
+  background: var(--primary-hover);
 }
 .text-button {
   border: 0;
