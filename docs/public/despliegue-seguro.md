@@ -296,16 +296,18 @@ Cockpit siguen activos; no se detuvieron ni reiniciaron otros servicios.
 
 - La CI usa ejecutores alojados por GitHub también para `pull_request`; no hay
   un runner propio en el Linux. Las acciones externas del workflow están fijadas
-  por SHA completo. El job de publicación solo corre en `main` cuando
+  por SHA completo. El job de publicación solo corre en `main` de
+  `Yianfri/routale` cuando
   `ENABLE_IMAGE_PUBLISH` vale `true`; el valor configurado en GitHub no se
   inspeccionó.
 - Ese job publica dos imágenes, la web integrada con el proxy HTTPS y la API.
   Devuelve sus digests y etiqueta las imágenes con versión y revisión OCI. El
-  workflow declara `contents: read` global y `packages: write` solo para
-  publicar en GHCR con `GITHUB_TOKEN`. No solicita `id-token` ni
-  `attestations`: no incorpora firma y verificación de procedencia para autorizar
-  un despliegue, ni conecta con el servidor. Los metadatos que pueda generar
-  BuildKit por defecto no sustituyen esa política de confianza.
+  workflow declara `contents: read` global y reserva la escritura de paquetes,
+  atestaciones y el token OIDC para el job de publicación. La receta incorpora
+  atestaciones por digest y un [verificador de procedencia](despliegue.md#verificación-de-procedencia)
+  para el par. La prueba con atestaciones reales y la repetición desde Linux
+  siguen pendientes. Los metadatos de BuildKit por sí solos no autorizan una
+  instalación.
 - `deploy/compose.yaml` configura API y web separadas, API sin puerto del host,
   red interna y un volumen persistente. El bind web es loopback por defecto,
   pero el `.env` privado puede cambiarlo.
