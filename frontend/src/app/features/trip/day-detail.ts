@@ -37,49 +37,6 @@ import { dateLabel, money, distance } from '../../shared/display';
       </section>
     </div>
 
-    <div class="distance-summary" role="group" aria-label="Kilómetros reales por fecha">
-      <div class="distance-item">
-        <span>Kilómetros reales · {{ dateLabel(day().date) }}</span>
-        <strong>
-          @if (actualDay(); as recordedDay) {
-            {{ recordedDay.cyclingKm === null ? 'Sin registrar' : distance(recordedDay.cyclingKm) }}
-          } @else {
-            Sin registrar
-          }
-        </strong>
-      </div>
-      <p class="distance-note">La distancia real se registra por fecha en el diario.</p>
-    </div>
-
-    <section class="transport-row" aria-labelledby="transport-title">
-      <span class="icon-plain" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M5 17V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10M5 12h14M7 17v2m10-2v2M8 8h8" />
-          <circle cx="8" cy="15" r="1" />
-          <circle cx="16" cy="15" r="1" />
-        </svg>
-      </span>
-      <div>
-        <h2 id="transport-title">Traslados y cruces</h2>
-        <p>{{ day().logistics.transportNotes || 'Por definir' }}</p>
-        <p class="status-line">
-          <span class="status-dot"></span
-          >{{ day().logistics.transportStatusText || 'Estado sin registrar' }}
-        </p>
-      </div>
-    </section>
-
-    <dl class="conditions" aria-label="Condiciones de la jornada">
-      <div>
-        <dt>Superficie</dt>
-        <dd>{{ day().logistics.surfaceText || 'Por definir' }}</dd>
-      </div>
-      <div>
-        <dt>Dificultad</dt>
-        <dd>{{ day().logistics.difficultyText || 'Por definir' }}</dd>
-      </div>
-    </dl>
-
     <details class="secondary-details">
       <summary>
         <span class="icon-plain" aria-hidden="true">
@@ -88,8 +45,53 @@ import { dateLabel, money, distance } from '../../shared/display';
             <path d="M14 4v5h5M8 13h8m-8 4h8" />
           </svg>
         </span>
-        Plan B, presupuesto y procedencia
+        Más detalles
       </summary>
+      <div class="distance-summary" role="group" aria-label="Kilómetros reales por fecha">
+        <div class="distance-item">
+          <span>Kilómetros reales · {{ dateLabel(day().date) }}</span>
+          <strong>
+            @if (actualDay(); as recordedDay) {
+              {{
+                recordedDay.cyclingKm === null ? 'Sin registrar' : distance(recordedDay.cyclingKm)
+              }}
+            } @else {
+              Sin registrar
+            }
+          </strong>
+        </div>
+        <p class="distance-note">La distancia real se registra por fecha en el diario.</p>
+      </div>
+
+      <section class="transport-row" aria-labelledby="transport-title">
+        <span class="icon-plain" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M5 17V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10M5 12h14M7 17v2m10-2v2M8 8h8" />
+            <circle cx="8" cy="15" r="1" />
+            <circle cx="16" cy="15" r="1" />
+          </svg>
+        </span>
+        <div>
+          <h2 id="transport-title">Traslados y cruces</h2>
+          <p>{{ day().logistics.transportNotes || 'Por definir' }}</p>
+          <p class="status-line">
+            <span class="status-dot"></span
+            >{{ day().logistics.transportStatusText || 'Estado sin registrar' }}
+          </p>
+        </div>
+      </section>
+
+      <dl class="conditions" aria-label="Condiciones de la jornada">
+        <div>
+          <dt>Superficie</dt>
+          <dd>{{ day().logistics.surfaceText || 'Por definir' }}</dd>
+        </div>
+        <div>
+          <dt>Dificultad</dt>
+          <dd>{{ day().logistics.difficultyText || 'Por definir' }}</dd>
+        </div>
+      </dl>
+
       <div class="secondary-content">
         <section aria-labelledby="plan-b-title">
           <h2 id="plan-b-title">Plan B</h2>
@@ -138,6 +140,8 @@ import { dateLabel, money, distance } from '../../shared/display';
       </div>
     </details>
 
+    <ng-content />
+
     <section class="diary" aria-labelledby="diary-title">
       <header class="diary-heading">
         <div class="diary-title">
@@ -167,16 +171,12 @@ import { dateLabel, money, distance } from '../../shared/display';
         </article>
       }
     </section>
-
-    <button class="text-button close-button" type="button" (click)="close.emit()">
-      Cerrar detalle ↑
-    </button>
   </div>`,
   styles: `
     .detail {
-      padding: clamp(20px, 3vw, 34px);
+      padding: 0;
       border-top: 1px solid var(--line);
-      background: var(--paper);
+      background: transparent;
     }
     .eyebrow {
       margin: 0;
@@ -429,10 +429,6 @@ import { dateLabel, money, distance } from '../../shared/display';
     .edit-button {
       margin-top: 3px;
     }
-    .close-button {
-      margin-top: 12px;
-      padding-inline: 0;
-    }
     @media (max-width: 620px) {
       .detail {
         padding: 20px 16px;
@@ -491,9 +487,7 @@ import { dateLabel, money, distance } from '../../shared/display';
 export class DayDetail {
   readonly day = input.required<PlannedDay>();
   readonly data = input.required<TripData>();
-  readonly note = output<void>();
   readonly edit = output<DiaryEntry>();
-  readonly close = output<void>();
   readonly actualDay = computed(
     () => this.data().actualDays.find((record) => record.date === this.day().date) ?? null,
   );

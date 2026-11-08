@@ -6,18 +6,10 @@ import { NoteInput } from '../../core/domain/model';
   selector: 'app-note-form',
   imports: [FormsModule],
   template: `<section class="note-form" aria-labelledby="note-title">
-    <button type="button" class="back-button" [disabled]="busy()" (click)="close.emit()">
-      <span aria-hidden="true">←</span> Volver · se conserva el borrador
-    </button>
-
     <header class="form-heading">
       <p class="eyebrow">Diario de ruta</p>
-      <h1 id="note-title">{{ initial().entryId ? 'Editar mi nota' : 'Anotar este día' }}</h1>
+      <h2 id="note-title">{{ initial().entryId ? 'Editar mi nota' : 'Anotar este día' }}</h2>
       <p class="stage-name">{{ stageName() || 'Jornada seleccionada' }}</p>
-      <p class="form-intro">
-        El borrador se conserva en este dispositivo. La nota del diario se guarda o actualiza sólo
-        después de completar el guardado.
-      </p>
     </header>
 
     <form (ngSubmit)="submit()">
@@ -103,36 +95,7 @@ import { NoteInput } from '../../core/domain/model';
   </section>`,
   styles: `
     .note-form {
-      width: min(100%, 720px);
-      margin: clamp(16px, 4vw, 44px) auto;
-      padding: clamp(20px, 4vw, 42px);
-      color: var(--ink);
-      background: var(--paper);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-    }
-    .back-button {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      min-height: 44px;
-      margin: -8px 0 24px;
-      padding: 6px 4px;
-      border: 0;
-      background: transparent;
-      color: var(--accent);
-      font-weight: 600;
-      text-align: left;
-    }
-    .back-button:hover {
-      background: transparent;
-      color: var(--accent-hover);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-    .back-button span {
-      font-size: 1.25rem;
+      padding-top: 12px;
     }
     .eyebrow {
       margin: 0;
@@ -142,9 +105,10 @@ import { NoteInput } from '../../core/domain/model';
       letter-spacing: 0.1em;
       text-transform: uppercase;
     }
-    h1 {
+    h2 {
       margin: 6px 0 4px;
-      font-family: inherit;
+      font-family: var(--font-display);
+      padding-right: 38px;
       font-size: clamp(1.85rem, 5vw, 2.5rem);
       font-weight: 700;
       letter-spacing: -0.04em;
@@ -156,16 +120,11 @@ import { NoteInput } from '../../core/domain/model';
       font-size: 1.08rem;
       font-weight: 600;
     }
-    .form-intro {
-      max-width: 60ch;
-      margin: 14px 0 26px;
-      color: var(--muted);
-    }
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 18px;
-      padding: 20px 0 10px;
+      padding: 15px 0 0;
       border-top: 1px solid var(--line);
     }
     .field {
@@ -234,17 +193,9 @@ import { NoteInput } from '../../core/domain/model';
       min-width: 100px;
     }
     @media (max-width: 560px) {
-      .note-form {
-        margin: 12px 0;
-        padding: 20px 16px;
-        border-radius: var(--radius);
-      }
       .form-grid {
         grid-template-columns: 1fr;
         gap: 0;
-      }
-      .form-intro {
-        margin-bottom: 20px;
       }
     }
     @media (max-width: 380px) {

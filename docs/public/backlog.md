@@ -85,7 +85,7 @@ anterior no certifica el estado actual; los estados reflejan la evidencia dispon
 | 2 | SEG-03 | Completada: preparación operativa aplicada y validada en Linux; Dockge contenido | Resolver la dependencia de Dockge | Configuración y guía instaladas por SSH en carpeta privada de usuario, permisos 700/600 y tres hashes coincidentes. Modelo validado con el Compose real del servidor; consultas de estado/registros ejecutadas correctamente sobre el proyecto bitacora. Sin .env activo, descarga de imágenes, contenedores nuevos, migraciones ni reinicios. Contenedores, tiempos/reinicios, volúmenes y redes existentes coinciden antes/después; Valheim intacto y Dockge detenido. La vulnerabilidad de Dockge no está corregida; reactivarlo requiere corrección verificable. Primer despliegue y reinicio real de Routale en OPS-03. Ver [operación](despliegue.md#operación-de-routale-por-composessh) y [contención](despliegue-seguro.md#dockge-requiere-una-corrección-upstream-verificable). |
 | 3 | SEG-04 | Completada la revisión actual y las correcciones compatibles; residuales documentados | Auditar seguridad de Routale y revisar dependencias | Revisión estática anterior cerrada sin vulnerabilidades confirmadas en su alcance. En esta etapa se fija npm 11.21.2 en Docker/CI para corregir undici y brace-expansion; instalación limpia, 43 pruebas unitarias, tres del proxy, lint/tipos/build y Nginx pasan. Lockfile conservado. npm reporta diez moderados de desarrollo sin corrección compatible en los rangos de sus consumidores; NuGet no reporta paquetes vulnerables. Se conservan los avisos crudos musl/zlib de Scout y su evaluación por rama/componente con fuentes oficiales y binarios inspeccionados. La relectura completa del SDK no terminó y no se cuenta como validada; sus paquetes relevantes sí se comprobaron. [Evidencia y límites](#dependencias-y-pruebas-posteriores-al-scan). Publicación/procedencia y despliegue permanecen en OPS-02/03. |
 | 4 | OPS-01 | En curso: transporte y recuperación de SQLite por SSH comprobados con datos ficticios | Respaldar y restaurar base y claves | Pasó el ensayo Linux → Windows con restic y la restauración por SSH a un directorio aislado en Linux. Coincidieron la base, el WAL y la clave ficticia. SQLite recuperó una fila del WAL y el corte de SSH no publicó un snapshot parcial. Pendientes el recorrido del ayudante con una imagen de Routale aprobada, la sesión y reanudación de la API, el destino y la contraseña definitivos, frecuencia, retención y la decisión sobre el cifrado del disco activo. Ver [procedimiento y límites](recuperacion.md#ensayo-y-operación-pendientes). |
-| 5 | GIT-01 | Infraestructura trasladada a una rama propia | Preparar los cambios para Git | La rama reúne los cambios de operación y dependencias. La restauración del navegador queda para una entrega aparte. Revisar el diff y ejecutar el control de publicación desde el checkout de Routale. |
+| 5 | GIT-01 | Infraestructura integrada; rediseño en revisión | Preparar los cambios para Git | El [PR 6](https://github.com/Yianfri/routale/pull/6) integró operación y dependencias con checks aprobados. El rediseño se revisa en el [PR 7](https://github.com/Yianfri/routale/pull/7). La restauración del navegador queda para una entrega aparte. |
 | 6 | OPS-02 | Pendiente | Verificar procedencia de web y API | Emitir y verificar atestaciones para ambas imágenes por repositorio, workflow y referencia aprobados; instalar por digest y comprobar que una imagen no autorizada se rechaza. Un digest solo identifica contenido. |
 | 7 | OPS-03 | Pendiente | Desplegar manualmente con datos ficticios | Tras SEG-02/03/04 y OPS-01/02, ejecutar migración separada y comprobar HTTPS, salud, sesión, guardado, reinicio y recuperación. Tener procedimiento de vuelta a imágenes, base y claves compatibles. No activar actualización automática. |
 | 8 | VAL-01 | Pendiente | Validar PWA en PC y Android | Tras OPS-03, completar los recorridos físicos descritos abajo: instalación, cierre/reapertura, uso sin red y copias entre dispositivos, incluida caída y vuelta del servidor. |
@@ -101,6 +101,10 @@ seguridad no equivale a una vulnerabilidad demostrada.
 
 - Angular/PWA responsive para escritorio, tablet y móvil, tema claro/oscuro,
   movimiento reducido, teclado y controles accesibles. [Dirección visual](direccion-visual.md).
+- Bienvenida con paisaje y navegación unificada en Ruta, Diario y Mi copia.
+  Ruta permite editar alojamiento, reserva, abastecimiento y plan B de una jornada
+  existente, con guardado local y comprobación de revisión. El diario y la edición
+  del plan usan panel lateral en escritorio y pantalla completa en móvil.
 - Demo ficticia; importación y restauración de respaldos con validación y revisión.
 - Itinerario por bloques de hasta siete jornadas, consulta de alojamiento y
   abastecimiento, navegación anterior/siguiente y selección de fecha.
@@ -148,16 +152,16 @@ personal ni Android físico.
 
 | ID | Estado | Entrega pendiente, en orden de prioridad | Criterio para completarla |
 | --- | --- | --- | --- |
-| PROD-01 | Pendiente | Editar logística de jornadas existentes | Editar alojamiento/estado, abastecimiento, traslados, plan B y presupuesto con validación y control de concurrencia local. Hoy solo se editan notas y kilómetros reales. Conservar IDs, fuentes originales y extensiones. |
-| PROD-02 | Pendiente | Editar estructura del viaje | Después de PROD-01, agregar/modificar jornadas y etapas con validación y relaciones consistentes. El plan hoy se incorpora desde un respaldo o la demo. Conservar compatibilidad de respaldos y asociaciones remotas. |
+| PROD-01 | En curso | Completar la edición de logística de jornadas | Ya se editan alojamiento, reserva, abastecimiento y plan B con validación y control de concurrencia local. Faltan traslados y presupuesto. Conservar IDs, fuentes originales y extensiones. |
+| PROD-02 | Pendiente | Editar estructura del viaje | Agregar, mover y reprogramar jornadas y etapas con vista previa del impacto. Conservar IDs, fuentes originales, extensiones, asociaciones remotas y el diario por fecha real. |
 | PROD-03 | Pendiente | Consultar copias locales reemplazadas | Exponer el archivo de copias locales con vista previa y comprobación de ediciones concurrentes antes de restaurar. Incluye revisar y ofrecer la exportación del viaje destino. Completar antes de habilitar sincronización automática. |
 | PROD-04 | Pendiente | Sincronización automática cuando sea posible | Con la app abierta, conexión y servidor disponible, enviar cambios pendientes y comprobar cambios remotos de la cuenta vinculada. Conservar trabajo offline, detectar conflictos y no reemplazar ediciones sin revisión. Validar sus cambios de seguridad y completar PROD-03 antes de activarla; comprobar también el recorrido físico entre dispositivos. |
 | PROD-05 | Pendiente | Selector de viajes locales | La persistencia ya conserva varios viajes; falta elegir el activo y conservar su selección sin mezclar notas, borradores ni asociaciones remotas. |
 | PROD-06 | Pendiente | Catálogo editable de lugares | Crear y editar lugares y sus vínculos con jornadas, sin inventar coordenadas ni perder datos desconocidos. |
 
 El orden guía las próximas PR de producto; seguridad y operación tienen su propia
-ruta en el mapa anterior. El editor y la sincronización
-automática son objetivos solicitados, no capacidades ya entregadas. La sincronización
+ruta en el mapa anterior. La edición local de logística es la primera parte del
+editor. La sincronización automática sigue pendiente y
 necesita activación explícita por perfil/cuenta, cambios pendientes durables,
 precondiciones de revisión, recuperación de respuestas perdidas y reintentos acotados.
 Volver a tener internet no demuestra que el servidor responda. Con la app cerrada,
@@ -167,7 +171,7 @@ Mapa integrado, proveedor y disponibilidad de cartografía sin red necesitan una
 decisión explícita y otra entrega. Historial remoto de versiones, colaboración,
 gestión pública de cuentas y empaquetado nativo se priorizarán según el uso real.
 
-## Mantenibilidad antes del editor y la sincronización
+## Mantenibilidad del editor y las copias
 
 La revisión de responsabilidades identifica estos cambios acotados para próximas
 PR. Son pendientes de refactorización, no defectos de seguridad confirmados ni
@@ -184,9 +188,9 @@ motivo para reescribir toda la aplicación:
 - Separar la actividad remota del bloqueo general en `App.remoteAction` antes de
   agregar trabajo en segundo plano. Un envío lento no debe impedir escribir y
   guardar una nota local; probar latencia, desconexión y edición durante el envío.
-- Implementar las futuras ediciones del plan como operaciones de dominio y
-  repositorio, con una transacción y comprobación de versión local. Los componentes
-  editan formularios, no IndexedDB directamente. Probar dos pestañas, datos inválidos
+- Implementar las futuras ediciones del plan como la edición de logística, con
+  operaciones de dominio y repositorio, transacción y comprobación de versión
+  local. Los componentes editan formularios. Probar dos pestañas, datos inválidos
   y conservación de fuentes, extensiones y asociaciones remotas.
 
 ## Revisión de seguridad y comprobaciones pendientes

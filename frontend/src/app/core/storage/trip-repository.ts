@@ -1,5 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import type { Backup, NoteInput, TripData } from '../domain/model';
+import type { DayLogistics } from '../domain/planned-day';
 
 interface LocalDatabase extends DBSchema {
   trips: { key: string; value: TripData };
@@ -197,15 +198,39 @@ export class TripRepository {
   }
   async saveNote(tripId: string, input: NoteInput): Promise<TripData> {
     const { addNote } = await import('../domain/diary');
+    return this.updateTrip(tripId, (current) => addNote(current, input));
+  }
+
+  async saveDayLogistics(
+    tripId: string,
+    dayId: string,
+    expectedToken: string,
+    input: DayLogistics,
+  ): Promise<TripData> {
+    const { editDayLogistics } = await import('../domain/planned-day');
+    return this.updateTrip(tripId, (current, state) => {
+      if (state?.token !== expectedToken) {
+        throw new Error(
+          'El cuaderno cambió. Cierra y vuelve a abrir la edición para revisar la jornada actual.',
+        );
+      }
+      return editDayLogistics(current, dayId, input);
+    });
+  }
+
+  private async updateTrip(
+    tripId: string,
+    update: (current: TripData, state: LocalTripState | undefined) => TripData,
+  ): Promise<TripData> {
     const db = await this.db(),
       tx = db.transaction(['trips', 'localTripStates'], 'readwrite');
     try {
       const trips = tx.objectStore('trips');
       const current = await trips.get(tripId);
       if (!current) throw new Error('No se encontró el cuaderno.');
-      const next = addNote(current, input);
-      await trips.put(next);
       const state = await tx.objectStore('localTripStates').get(tripId);
+      const next = update(current, state);
+      await trips.put(next);
       await tx.objectStore('localTripStates').put(nextState(tripId, state));
       await tx.done;
       return next;
