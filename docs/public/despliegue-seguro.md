@@ -305,9 +305,9 @@ Cockpit siguen activos; no se detuvieron ni reiniciaron otros servicios.
   workflow declara `contents: read` global y reserva la escritura de paquetes,
   atestaciones y el token OIDC para el job de publicación. La receta incorpora
   atestaciones por digest y un [verificador de procedencia](despliegue.md#verificación-de-procedencia)
-  para el par. La prueba con atestaciones reales y la repetición desde Linux
-  siguen pendientes. Los metadatos de BuildKit por sí solos no autorizan una
-  instalación.
+  para el par. La prueba con atestaciones reales pasó en GitHub y Linux. El
+  verificador rechazó el par al exigir un commit distinto. Los metadatos de
+  BuildKit por sí solos no autorizan una instalación.
 - `deploy/compose.yaml` configura API y web separadas, API sin puerto del host,
   red interna y un volumen persistente. El bind web es loopback por defecto,
   pero el `.env` privado puede cambiarlo.
@@ -320,9 +320,9 @@ Cockpit siguen activos; no se detuvieron ni reiniciaron otros servicios.
   SQLite y datos de demostración: escritura con ETag, conflicto 412 y
   persistencia de cookie/CSRF, base y claves al reiniciar la API. Esto no prueba
   una instalación, respaldo o restauración en el Linux.
-- En el Linux no apareció ningún servicio Routale ni almacenamiento suyo que
-  pudiera auditar. Por eso todavía no se ha verificado cifrado de disco,
-  respaldo de datos reales ni restauración en ese equipo.
+- El inventario inicial del Linux se hizo antes de instalar Routale. Después
+  se comprobó la restauración en el [ensayo con datos ficticios](recuperacion.md#ensayo-y-operación-pendientes).
+  Siguen pendientes el cifrado de disco y el respaldo de datos reales.
 
 ## Acceso de red actual
 

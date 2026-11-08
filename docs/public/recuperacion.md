@@ -18,8 +18,8 @@ Node 24.22.1, restic 0.19.1 y Docker CLI local, u OpenSSH para el alias remoto. 
 instala servicios, abre puertos, configura SSH ni cambia permisos del servidor.
 La rama Docker local se ensayó con datos ficticios. También se comprobó el
 transporte Linux → Windows y la restauración por SSH con un juego ficticio de
-SQLite y una clave de prueba. La comprobación con la API de Routale en Linux y
-la configuración definitiva del respaldo siguen pendientes.
+SQLite y una clave de prueba. Después se repitió el flujo con la API de Routale
+en Linux. La configuración definitiva del respaldo sigue pendiente.
 
 Se elige restic para usar cifrado autenticado y comprobación de contenido ya
 implementados, sin diseñar un formato criptográfico propio. El repositorio,
@@ -135,8 +135,15 @@ archivo, restic conservó el único snapshot válido. La restauración transmiti
 ese snapshot hacia un directorio nuevo en Linux. Coincidieron los hashes de la
 base, el WAL y la clave ficticia. SQLite pasó las comprobaciones de integridad y
 referencias y leyó la fila del WAL. El ensayo usó herramientas del sistema y
-restic, sin instalar la API en el servidor. Quedan por comprobar el ayudante con
-una imagen aprobada, la sesión de Routale restaurada y la reanudación de su API.
+restic, sin instalar la API para ese ensayo de transporte.
+
+Un segundo ensayo usó la API aprobada en Linux con una cuenta y un viaje
+ficticios. El ayudante de respaldo cifró la copia en Windows y restic verificó
+todos sus datos. Se restauró en un volumen nuevo y una segunda instancia leyó
+el viaje con la sesión emitida antes del respaldo. Al cortar el proceso SSH
+productor después de recibir bytes, el ayudante rechazó la copia parcial y
+reanudó la API por otra conexión SSH. Queda pendiente la recuperación
+independiente si se pierde el PC que ejecuta el ayudante.
 
 Propuesta inicial para revisar tras el ensayo físico: copiar diariamente cuando
 ambos equipos estén disponibles y antes de cada actualización, comprobar el

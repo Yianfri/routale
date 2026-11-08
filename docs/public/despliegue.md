@@ -50,9 +50,27 @@ El CI prepara ambas imágenes después de las comprobaciones, incluida integraci
 real de navegador/API/SQLite. Solo puede publicar desde `main` de
 `Yianfri/routale` con `ENABLE_IMAGE_PUBLISH=true`. El workflow firma los digests
 de web y API y comprueba ambas atestaciones antes de anunciar el par en el
-resumen de Actions. El primer ensayo con imágenes firmadas y la comprobación
-desde Linux siguen pendientes.
+resumen de Actions. El [PR 8](https://github.com/Yianfri/routale/pull/8) integró
+este control. Los [checks de main](https://github.com/Yianfri/routale/actions/runs/42492607756)
+pasaron. La [primera publicación firmada](https://github.com/Yianfri/routale/actions/runs/42493380176)
+publicó y verificó el par del commit `1a4b1c5`. El verificador también se
+probó desde Linux con las imágenes por digest.
 La guía pública vigente sustituye cualquier plan anterior de ejecutor self-hosted.
+
+### Primer ensayo en Linux
+
+El 8 de noviembre de 2026 se levantaron la web y la API del commit `1a4b1c5`
+en un proyecto Compose y volumen exclusivos de ensayo. Se aplicó la migración
+antes de arrancar y se creó una cuenta ficticia. Desde el PC se comprobó HTTPS
+con un certificado válido de Tailscale, salud, rechazo de peticiones sin
+sesión, guardado de un viaje ficticio y lectura con la misma sesión tras
+reiniciar los servicios. El [ensayo de recuperación](recuperacion.md#ensayo-y-operación-pendientes)
+comprobó un volumen separado.
+
+Al acabar la prueba HTTPS se restauró y comprobó la configuración anterior de
+Tailscale Serve. La instancia de ensayo quedó saludable y limitada a loopback.
+Se detuvo la instancia restaurada y se conservó su volumen de prueba. El ensayo
+de instalación de la PWA en el teléfono sigue en VAL-01.
 
 ## Acceso recomendado: Tailscale Serve
 
@@ -110,9 +128,9 @@ rama base. Crear un commit o una PR no despliega Routale en el Linux.
 
 El acceso SSH se usa por separado para el [inventario de lectura](inventario-linux.md).
 No entregar claves administrativas del servidor a las pruebas de PR ni ejecutar
-allí código de forks. En el estado actual, el despliegue sigue siendo una tarea
-posterior a seguridad, procedencia y recuperación; no hay un actualizador
-integrado web/API listo para producción.
+allí código de forks. La operación con datos reales sigue después de la
+validación en dispositivos y la preparación del respaldo definitivo. El
+actualizador integrado web/API está pendiente en OPS-05.
 
 ### Instalación de una versión aprobada
 
@@ -135,6 +153,27 @@ un agente pull ni un ensayo de recuperación de la API en el Linux.
 
 ### Verificación de procedencia
 
+Para el primer ensayo, comprobar qué commit aprobado está en `main` y
+habilitar temporalmente `ENABLE_IMAGE_PUBLISH=true` en las variables de Actions.
+Ejecutar **Comprobar y empaquetar** manualmente sobre `main`. Evitar otros merges
+mientras esté habilitada la variable. Comprobar que el resumen de la ejecución
+corresponda al commit aprobado y muestre las dos referencias verificadas.
+Restablecer el valor anterior de la variable al terminar el ensayo.
+
+El 8 de noviembre de 2026, el ensayo manual verificó en GitHub las
+atestaciones de [web](https://github.com/Yianfri/routale/attestations/65067367)
+y [API](https://github.com/Yianfri/routale/attestations/65067378). GHCR respondió
+a la lectura anónima de los dos manifiestos por digest. Al iniciar el job de
+imágenes se restableció el control para ejecuciones futuras retirando la
+variable temporal.
+
+Desde Linux se ejecutó el verificador del commit aprobado con GitHub CLI
+portable, comprobado contra el SHA-256 de la publicación oficial. Las dos
+atestaciones se obtuvieron de la API pública y se pasaron mediante `--bundle`.
+La verificación aceptó los dos digests de `1a4b1c5` y rechazó el mismo par al
+exigir otro commit. El ensayo no necesitó credenciales ni instaló paquetes en
+el sistema. La descarga operativa y el arranque quedan para OPS-03.
+
 Elegir un commit aprobado en `main` de `Yianfri/routale` y copiar las dos
 referencias por digest del resumen de su publicación exitosa. Usar GitHub CLI
 con `gh attestation verify`, autenticado en GitHub y con acceso de lectura
@@ -156,7 +195,9 @@ privado. Antes de descargar, comprobar que `docker compose config --images`
 muestre exactamente ese par con el entorno elegido. Conservar juntos el SHA
 y las dos referencias para repetir la verificación al instalar o recuperar.
 
-Referencias de GitHub: [atestaciones para imágenes](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations#generating-build-provenance-for-container-images)
+Referencias de GitHub sobre [variables de Actions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables#creating-configuration-variables-for-a-repository),
+[ejecución manual](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow),
+[atestaciones para imágenes](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations#generating-build-provenance-for-container-images)
 y [verificación con GitHub CLI](https://cli.github.com/manual/gh_attestation_verify).
 
 ### Dockge, Portainer y despliegue automático
@@ -212,13 +253,14 @@ archivos, 600; propietario y hashes se comprobaron contra las copias locales.
 El Compose real del Linux validó el modelo y aceptó las consultas de estado y
 registros del proyecto. Contenedores, tiempos y reinicios, volúmenes y redes de
 Valheim y Dockge coinciden antes y después. El resultado y las rutas personales
-permanecen como evidencia local privada. La aplicación sigue sin desplegarse.
+permanecen como evidencia local privada. El ensayo de OPS-03 usa un proyecto
+y volumen separados de esta carpeta de operación.
 
 La carpeta contiene `compose.yaml`, `.env.example` y `OPERACION.md`. Este último
-incluye los comandos de consulta que usan la plantilla en esta etapa. No existe
-un `.env` activo: se preparará para OPS-03 con las dos imágenes por digest tras
-verificar su procedencia en OPS-02. La plantilla contiene marcadores deliberados:
-no permite elegir una versión de producción sin completar ese paso. Conservar
+incluye los comandos de consulta que usan la plantilla en esta etapa. El
+`.env` de esta carpeta se preparará para la operación habitual con las dos
+imágenes por digest tras verificar su procedencia. La plantilla contiene
+marcadores para ambos digests. Conservar
 loopback, el nombre de proyecto `bitacora` y el volumen `routale_private_data`.
 Si se adapta la red privada para evitar una colisión, mantener coherentes subred,
 gateway, IP de web, IP de API y proxy de confianza. No cambiar nombres o redes de

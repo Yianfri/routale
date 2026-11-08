@@ -65,9 +65,10 @@ La [evidencia de la revisión](despliegue-seguro.md#inventario-parcial-actualiza
 conserva detalle y límites; las salidas y direcciones permanecen privadas. La
 [guía por etapas](inventario-linux.md) sirve para repetirla si cambian WAN,
 publicaciones, reglas o dispositivos autorizados. Esto no certifica ausencia de
-intrusiones ni habilita el despliegue. Dockge continúa detenido y Routale sigue
-sin instalarse en el Linux. La preparación operativa sin Dockge se aplicó y validó en Linux en SEG-03. La revisión de dependencias de SEG-04 quedó registrada con sus avisos residuales; sigue OPS-01.
-Los ensayos de respaldo pueden avanzar localmente.
+intrusiones. Dockge continúa detenido. La preparación operativa se aplicó en
+SEG-03 y el ensayo privado de Routale se completó en OPS-03. Los avisos
+residuales de dependencias se registran en SEG-04. La validación en dispositivos
+físicos sigue en VAL-01.
 
 ## Seguridad y operación: preparar el primer despliegue
 
@@ -84,11 +85,11 @@ anterior no certifica el estado actual; los estados reflejan la evidencia dispon
 | 1 | SEG-02 | Completada: alcance IPv4 aprobado y comprobado | Restringir acceso y exposición | Grant amplio sustituido con aprobación por PC actual al Linux TCP 22/443/9090; regla SSH conservada, servidor Tailscale SSH deshabilitado. Política respaldada, tres tests aceptados, filtro recibido coincidente y acceso IPv4 permitido/recovery LAN comprobados. No concede IPv6 ni equipos nuevos. Prueba física de un nodo afiliado excluido no realizada; se conserva ese límite. La WAN pública coincide con la dirección probada desde la red móvil. No se cambiaron router, UFW ni sshd. |
 | 2 | SEG-03 | Completada: preparación operativa aplicada y validada en Linux; Dockge contenido | Resolver la dependencia de Dockge | Configuración y guía instaladas por SSH en carpeta privada de usuario, permisos 700/600 y tres hashes coincidentes. Modelo validado con el Compose real del servidor; consultas de estado/registros ejecutadas correctamente sobre el proyecto bitacora. Sin .env activo, descarga de imágenes, contenedores nuevos, migraciones ni reinicios. Contenedores, tiempos/reinicios, volúmenes y redes existentes coinciden antes/después; Valheim intacto y Dockge detenido. La vulnerabilidad de Dockge no está corregida; reactivarlo requiere corrección verificable. Primer despliegue y reinicio real de Routale en OPS-03. Ver [operación](despliegue.md#operación-de-routale-por-composessh) y [contención](despliegue-seguro.md#dockge-requiere-una-corrección-upstream-verificable). |
 | 3 | SEG-04 | Completada la revisión actual y las correcciones compatibles; residuales documentados | Auditar seguridad de Routale y revisar dependencias | Revisión estática anterior cerrada sin vulnerabilidades confirmadas en su alcance. En esta etapa se fija npm 11.21.2 en Docker/CI para corregir undici y brace-expansion; instalación limpia, 43 pruebas unitarias, tres del proxy, lint/tipos/build y Nginx pasan. Lockfile conservado. npm reporta diez moderados de desarrollo sin corrección compatible en los rangos de sus consumidores; NuGet no reporta paquetes vulnerables. Se conservan los avisos crudos musl/zlib de Scout y su evaluación por rama/componente con fuentes oficiales y binarios inspeccionados. La relectura completa del SDK no terminó y no se cuenta como validada; sus paquetes relevantes sí se comprobaron. [Evidencia y límites](#dependencias-y-pruebas-posteriores-al-scan). Publicación/procedencia y despliegue permanecen en OPS-02/03. |
-| 4 | OPS-01 | En curso: transporte y recuperación de SQLite por SSH comprobados con datos ficticios | Respaldar y restaurar base y claves | Pasó el ensayo Linux → Windows con restic y la restauración por SSH a un directorio aislado en Linux. Coincidieron la base, el WAL y la clave ficticia. SQLite recuperó una fila del WAL y el corte de SSH no publicó un snapshot parcial. Pendientes el recorrido del ayudante con una imagen de Routale aprobada, la sesión y reanudación de la API, el destino y la contraseña definitivos, frecuencia, retención y la decisión sobre el cifrado del disco activo. Ver [procedimiento y límites](recuperacion.md#ensayo-y-operación-pendientes). |
-| 5 | GIT-01 | Infraestructura integrada; rediseño en revisión | Preparar los cambios para Git | El [PR 6](https://github.com/Yianfri/routale/pull/6) integró operación y dependencias con checks aprobados. El rediseño se revisa en el [PR 7](https://github.com/Yianfri/routale/pull/7). La restauración del navegador queda para una entrega aparte. |
-| 6 | OPS-02 | En curso: firma y verificador preparados | Verificar procedencia de web y API | El workflow prepara atestaciones y verifica el par por digest, nombre, repositorio, workflow, referencia y commit. Pruebas con un verificador simulado cubren referencias inválidas, fallo de la segunda imagen e intercambio de nombres. Quedan la publicación de prueba, verificación de atestaciones reales y repetición desde Linux. Ver [política de procedencia](despliegue.md#verificación-de-procedencia). |
-| 7 | OPS-03 | Pendiente | Desplegar manualmente con datos ficticios | Tras SEG-02/03/04 y OPS-01/02, ejecutar migración separada y comprobar HTTPS, salud, sesión, guardado, reinicio y recuperación. Tener procedimiento de vuelta a imágenes, base y claves compatibles. No activar actualización automática. |
-| 8 | VAL-01 | Pendiente | Validar PWA en PC y Android | Tras OPS-03, completar los recorridos físicos descritos abajo: instalación, cierre/reapertura, uso sin red y copias entre dispositivos, incluida caída y vuelta del servidor. |
+| 4 | OPS-01 | En curso: respaldo y restauración de Routale ensayados con datos ficticios | Respaldar y restaurar base y claves | Pasó el flujo Linux → Windows con restic, restauración en un volumen separado, recuperación del viaje y la sesión, y reanudación de la API tras cortar el SSH productor. Pendientes la recuperación si se pierde el PC entero, el destino y la contraseña definitivos, frecuencia, retención y la decisión sobre el cifrado del disco activo. Ver [procedimiento y límites](recuperacion.md#ensayo-y-operación-pendientes). |
+| 5 | GIT-01 | Completada para infraestructura y rediseño | Preparar los cambios para Git | El [PR 6](https://github.com/Yianfri/routale/pull/6) integró operación y dependencias. El [PR 7](https://github.com/Yianfri/routale/pull/7) integró el rediseño y los checks de `main` pasaron. Las mejoras de restauración del navegador quedan para una entrega aparte. |
+| 6 | OPS-02 | Completada: primer par firmado y verificado en GitHub y Linux | Verificar procedencia de web y API | El [PR 8](https://github.com/Yianfri/routale/pull/8) quedó en `main`. La [ejecución manual](https://github.com/Yianfri/routale/actions/runs/42493380176) publicó y verificó las atestaciones del commit `1a4b1c5`. En Linux, el verificador aceptó el par exacto por digest y lo rechazó al indicar otro commit. Se retiró la variable temporal de publicación. Ver [política de procedencia](despliegue.md#verificación-de-procedencia). |
+| 7 | OPS-03 | Completada: primer despliegue manual con datos ficticios | Desplegar manualmente con datos ficticios | Se usaron los digests aprobados, un proyecto y volumen exclusivos y una migración separada. Desde el PC pasaron HTTPS privado, sesión, guardado, reinicio y recuperación en otro volumen. Se restableció la ruta anterior de Tailscale y el entorno de prueba quedó accesible solo por loopback. [Detalle del ensayo](despliegue.md#primer-ensayo-en-linux). |
+| 8 | VAL-01 | En curso: instalación, recuperación y escritura sin red comprobadas en Android | Validar PWA en PC y Android | Edge en Windows pasó recuperación por HTTPS, escritura y exportación sin red, reapertura y guardado explícito al reconectar. Un segundo perfil recuperó la copia. En Android se comprobó la instalación, la recuperación de la nota de Windows y la persistencia de una nota tras reabrir sin red. Quedan la confirmación del guardado remoto desde Android, el inicio desde el icono en Windows y la comprobación de caída y vuelta del servidor. |
 | 9 | OPS-04 | Pendiente | Preparar operación con datos reales | Tras VAL-01, cerrar correcciones del ensayo, comprobar respaldos programados, acceso restringido y supervisión de disponibilidad/espacio sin registrar contenido personal. Conservar evidencia de restauración antes de importar datos reales. |
 | 10 | OPS-06 | En curso: diseño local sin instalar | Alertar accesos y cambios administrativos por correo | Canal elegido por el propietario; preparación privada sin envío. Revisados servicios de registro y disponibilidad de lectura, sin exportar mensajes crudos. Preparar avisos de ingreso SSH, fallos repetidos agrupados y cambios administrativos acordados, con cobertura explícita para Cockpit/Dockge/Tailscale. Confirmar relay y destinatario, proteger secretos, limitar datos/volumen y probar cursor, rotación, caída del correo, recuperación y recepción real. No registrar comandos o diarios completos; un login no demuestra todas las acciones posteriores. Puede prepararse en paralelo a SEG-02; [alcance y límites](despliegue-seguro.md#alertas-de-acceso-y-cambios-administrativos). |
 | 11 | OPS-05 | Pendiente | Automatizar el despliegue tras integrar a main | Objetivo solicitado: cambio aprobado integrado a main → CI aprobada → publicación de web/API → el Linux recoge y despliega la versión verificada, sin intervención manual habitual. Primero ensayar instalación y recuperación manuales. Completar el actualizador conjunto con procedencia, respaldo, migración y recuperación comprobados; probar fallos con datos ficticios. No ejecutar código de PR/forks en el Linux ni usar allí un runner de CI. La automatización sigue desactivada y update.sh todavía rechaza el stack con API. |
@@ -386,10 +387,30 @@ revisión se detienen al terminar y sus volúmenes de prueba se conservan separa
 
 ## Validación pendiente en dispositivos físicos
 
-- Instalar la PWA en Windows y Android, cerrar/reabrir y probar consulta/escritura
-  sin red después de preparar la aplicación.
-- Recorrer PC → guardar copia → Android → revisar/recuperar con el mismo origen
-  HTTPS. Verificar también qué sucede con el servidor apagado y al volver.
+En el ensayo HTTPS del 8 de noviembre de 2026, Edge en Windows recuperó una
+copia ficticia, guardó una nota y exportó el respaldo sin red. La nota
+persistió al cerrar y volver a abrir una pestaña. Al reconectar se guardó
+explícitamente una copia y un segundo perfil recuperó la nota. El primer
+intento sin red falló porque el módulo de notas aún no estaba en caché, aun
+con el service worker activo. El recorrido pasó después de esperar a que
+terminara de almacenarse ese módulo. Queda revisar cómo refleja esa espera el
+indicador de preparación sin conexión.
+
+En Android, el propietario confirmó la respuesta de salud por HTTPS tras
+cambiar el DNS privado a Automático. Instaló Routale desde Chrome y confirmó
+que abre desde el icono. Para facilitar el ingreso desde el teléfono se creó
+otra cuenta de ensayo y se le copió por la API el mismo respaldo ficticio de
+Windows. El propietario recuperó ese respaldo en Android y vio la nota en
+el Diario. Después guardó otra nota sin conexión y confirmó que seguía
+visible al reabrir la app desde el icono, aún sin red. Al verificar la copia
+remota por la API, seguía en su revisión inicial, sin la nueva nota. La
+ventana HTTPS ya había terminado al intentar recuperarla desde Edge. Se
+verificó que Tailscale volvió a su configuración previa.
+
+- Instalar la PWA en Windows y abrirla desde el icono.
+- Repetir el guardado explícito desde Android, confirmar que cambia la revisión
+  remota y recuperar la nota desde el PC. Verificar qué sucede con el servidor
+  apagado y al volver.
 - Comprobar almacenamiento y exportación en esos navegadores. Una instalación
   PWA no impide que el usuario borre los datos ni sustituye un respaldo.
 
