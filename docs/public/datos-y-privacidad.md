@@ -12,7 +12,8 @@ No añadir un plan personal a código, pruebas, capturas, README ni ejemplos.
 | Borrador de una nota | localStorage del navegador | No. |
 | Respaldo exportado | Descarga elegida por el usuario | No por el proyecto. |
 | Copias enviadas explícitamente a la API | SQLite privado | Solo mediante petición autenticada desde Mi copia. |
-| Cuentas, hashes de contraseña, sesiones y claves de cookies | Directorio privado del backend | Permanecen en la instalación de la API, fuera de Git e imágenes. |
+| Cuentas, hashes de contraseña, sesiones y claves de cookies | Directorio privado del backend | Fuera de Git e imágenes; un respaldo operativo explícito las incluye en una copia cifrada. |
+| Respaldo operativo de SQLite y claves | Repositorio cifrado elegido por el propietario | Solo al ejecutar el ayudante administrativo; el destino propuesto es un PC separado del servidor. |
 
 Un archivo propio se selecciona en **Traer un respaldo** o **Restaurar respaldo**.
 Se lee con File.text, se valida y se revisa antes de guardar. La selección del
@@ -58,3 +59,10 @@ mediante X-Frame-Options y CSP frame-ancestors. CI comprueba las respuestas real
 SQLite y las claves persistentes de Data Protection no tienen cifrado específico
 en disco. El directorio requiere permisos privados y un respaldo protegido. No
 incorporar bases, claves, cookies o archivos enviados a imágenes ni artefactos CI.
+
+El [procedimiento operativo de recuperación](recuperacion.md) usa restic para
+cifrar base y claves juntas en un repositorio independiente. No lo activa la
+aplicación ni envía copias automáticamente. El ensayo local usa exclusivamente
+datos ficticios; la configuración real Linux/Windows está pendiente. Un volumen
+recuperado contiene nuevamente la base y claves en claro: exige la misma
+protección del almacenamiento que el servidor original.

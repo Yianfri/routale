@@ -54,7 +54,7 @@ const allowed = (path) =>
   ) ||
   /^frontend\/(AGENTS\.md|README\.md|[\w.-]+\.(json|ts|mjs))$/.test(path) ||
   /^docs\/public\/[\w-]+\.md$/.test(path) ||
-  /^backend\/(AGENTS\.md|README\.md|Dockerfile|\.dockerignore|\.editorconfig|Bitacora\.slnx|package\.json|tests\/api\.test\.mjs)$/.test(
+  /^backend\/(AGENTS\.md|README\.md|Dockerfile|\.dockerignore|\.editorconfig|Bitacora\.slnx|package\.json|tests\/(?:api|recovery)\.test\.mjs)$/.test(
     path,
   ) ||
   /^backend\/tests\/Bitacora\.Api\.Tests\/(?:(?:Domain|Persistence)\/)?[\w.-]+\.(?:cs|csproj|json)$/.test(
@@ -64,7 +64,7 @@ const allowed = (path) =>
     path,
   ) ||
   path === 'backend/src/Bitacora.Api/packages.lock.json' ||
-  /^deploy\/(compose(\.local)?\.ya?ml|nginx(?:\.local|\.stack)?\.conf|update\.sh|\.env\.example)$/.test(
+  /^deploy\/(compose(\.local)?\.ya?ml|nginx(?:\.local|\.stack)?\.conf|update\.sh|recovery\.mjs|\.env\.example)$/.test(
     path,
   ) ||
   /^\.github\/workflows\/(ci|deploy)\.yml$/.test(path);

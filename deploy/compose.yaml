@@ -1,4 +1,6 @@
-# Copiar este archivo y .env a la carpeta de la stack en Dockge.
+# Copiar este archivo y .env a la carpeta dedicada de Routale; operar por Compose/SSH.
+# Conservar el proyecto bitacora y el nombre del volumen al actualizar.
+# bitacora es el identificador Docker heredado de Routale.
 # En producción: ejecutar el comando migrate una vez antes de up.
 name: bitacora
 services:

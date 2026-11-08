@@ -1,4 +1,5 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS restore
+RUN apk add --no-cache --upgrade 'curl>=8.23.0-r0' 'libcurl>=8.23.0-r0'
 WORKDIR /src
 COPY src/Bitacora.Api/Bitacora.Api.csproj src/Bitacora.Api/
 COPY src/Bitacora.Api/packages.lock.json src/Bitacora.Api/
