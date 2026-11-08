@@ -16,9 +16,10 @@ claro en Windows. El propio disco del servidor no cuenta como copia independient
 `deploy/recovery.mjs` implementa el respaldo y la recuperación manuales. Necesita
 Node 24.22.1, restic 0.19.1 y Docker CLI local, u OpenSSH para el alias remoto. No
 instala servicios, abre puertos, configura SSH ni cambia permisos del servidor.
-La rama Docker local se ensayó con datos ficticios. El recorrido físico
-Linux → Windows y la recuperación en el Linux **siguen pendientes**; no se han
-configurado credenciales, directorios definitivos ni programación automática.
+La rama Docker local se ensayó con datos ficticios. También se comprobó el
+transporte Linux → Windows y la restauración por SSH con un juego ficticio de
+SQLite y una clave de prueba. La comprobación con la API de Routale en Linux y
+la configuración definitiva del respaldo siguen pendientes.
 
 Se elige restic para usar cifrado autenticado y comprobación de contenido ya
 implementados, sin diseñar un formato criptográfico propio. El repositorio,
@@ -125,6 +126,17 @@ base corrupta, relaciones inválidas y esquema incompatible. Pasan 22 pruebas
 compilación sin advertencias, formato y comprobación de migraciones pendientes.
 CI tiene preparado
 el mismo ensayo en un ejecutor de GitHub; no se afirma que ya se haya ejecutado.
+
+El 7 de noviembre de 2026 se creó una base SQLite de prueba con una fila
+pendiente de consolidar desde el WAL. Restic en Windows cifró el archivo
+transmitido por SSH, rechazó una contraseña incorrecta y verificó todos los
+datos del repositorio. Al cortar el cliente SSH después de recibir parte del
+archivo, restic conservó el único snapshot válido. La restauración transmitió
+ese snapshot hacia un directorio nuevo en Linux. Coincidieron los hashes de la
+base, el WAL y la clave ficticia. SQLite pasó las comprobaciones de integridad y
+referencias y leyó la fila del WAL. El ensayo usó herramientas del sistema y
+restic, sin instalar la API en el servidor. Quedan por comprobar el ayudante con
+una imagen aprobada, la sesión de Routale restaurada y la reanudación de su API.
 
 Propuesta inicial para revisar tras el ensayo físico: copiar diariamente cuando
 ambos equipos estén disponibles y antes de cada actualización, comprobar el
