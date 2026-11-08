@@ -6,7 +6,7 @@ copias privadas en Linux. Distingue el modelo actual de las propuestas futuras,
 las relaciones de datos y los criterios para crecer. Esta página describe lo
 que está implementado; no afirma que ya exista un despliegue en Linux.
 
-Frontend Angular 22.2.2 standalone, TypeScript estricto y PWA mediante Angular
+Frontend Angular 22.2.4 standalone, TypeScript estricto y PWA mediante Angular
 Service Worker. Backend ASP.NET Core .NET 10 con EF Core 10 y SQLite como servicio separado;
 Angular consume la API desde Mi copia para sesión y copias explícitas; no hay
 sincronización automática. IndexedDB conserva el cuaderno de trabajo sin red.

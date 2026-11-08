@@ -1,11 +1,14 @@
-FROM node:24.19.0-alpine AS build
+FROM node:24.22.1-alpine AS build
+# El npm de la base incluye undici/brace-expansion afectados; fijar la revisión corregida.
+RUN npm install --global --ignore-scripts --no-audit --no-fund npm@11.21.2 && npm cache clean --force
 WORKDIR /workspace/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-FROM nginx:1.30.5-alpine
+# Solo servidor estático/proxy: no se necesitan módulos de imágenes ni XSLT.
+FROM nginx:1.30.6-alpine-slim
 ARG NGINX_CONFIG=deploy/nginx.conf
 COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 COPY --from=build /workspace/frontend/dist/routale/browser /usr/share/nginx/html

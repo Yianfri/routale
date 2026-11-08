@@ -6,7 +6,8 @@
     "build": "dotnet build Bitacora.slnx --no-restore",
     "test:unit": "dotnet test Bitacora.slnx --no-build --no-restore",
     "check:migrations": "dotnet ef migrations has-pending-model-changes --project src/Bitacora.Api --no-build",
-    "test": "node --test --test-concurrency=1 tests/api.test.mjs"
+    "test": "node --test --test-concurrency=1 tests/api.test.mjs",
+    "test:recovery": "node --test --test-concurrency=1 tests/recovery.test.mjs"
   },
   "engines": {
     "node": ">=24.15.0 <25"

@@ -20,12 +20,16 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "24.19.0"
+          node-version: "24.22.1"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+      - name: Fijar npm de compilación
+        run: npm install --global --ignore-scripts --no-audit --no-fund npm@11.21.2
       - run: npm ci
       - run: npm run format:check
       - run: npx prettier --check ../backend/tests/*.mjs ../backend/package.json ../global.json ../dotnet-tools.json
+      - run: npx prettier --check ../deploy/recovery.mjs
+      - run: node --check ../deploy/recovery.mjs
       - run: npm run lint
       - run: npm run typecheck:tests
       - run: npm test
@@ -65,7 +69,9 @@ jobs:
           global-json-file: global.json
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "24.19.0"
+          node-version: "24.22.1"
+      - name: Fijar npm de compilación
+        run: npm install --global --ignore-scripts --no-audit --no-fund npm@11.21.2
       - run: node ../frontend/tools/prepare-seed.mjs
       - run: dotnet tool restore
       - run: dotnet restore Bitacora.slnx --locked-mode
@@ -84,9 +90,11 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "24.19.0"
+          node-version: "24.22.1"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+      - name: Fijar npm de compilación
+        run: npm install --global --ignore-scripts --no-audit --no-fund npm@11.21.2
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           global-json-file: global.json
@@ -110,6 +118,23 @@ jobs:
       - name: Probar navegador contra API y SQLite reales
         working-directory: frontend
         run: npm run test:integration
+      - name: Preparar restic verificado para el ensayo ficticio
+        shell: bash
+        run: |
+          restic_dir="$(mktemp -d "$RUNNER_TEMP/routale-restic-XXXXXX")"
+          cd "$restic_dir"
+          curl --fail --location --proto '=https' --tlsv1.2 --output SHA256SUMS https://github.com/restic/restic/releases/download/v0.19.1/SHA256SUMS
+          curl --fail --location --proto '=https' --tlsv1.2 --output restic_0.19.1_linux_amd64.bz2 https://github.com/restic/restic/releases/download/v0.19.1/restic_0.19.1_linux_amd64.bz2
+          sha256sum --check --ignore-missing SHA256SUMS
+          bzip2 --decompress restic_0.19.1_linux_amd64.bz2
+          chmod 700 restic_0.19.1_linux_amd64
+          echo "RESTIC_BINARY=$restic_dir/restic_0.19.1_linux_amd64" >> "$GITHUB_ENV"
+      - name: Construir API para el ensayo de recuperación
+        run: docker build --tag routale-api:recovery-check backend
+      - name: Ensayar respaldo cifrado y recuperación en un volumen nuevo
+        env:
+          ROUTALE_RECOVERY_IMAGE: routale-api:recovery-check
+        run: node --test --test-concurrency=1 backend/tests/recovery.test.mjs
   image:
     needs: [checks, backend, integration]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.ENABLE_IMAGE_PUBLISH == 'true'
