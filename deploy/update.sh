@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Uso en la carpeta de Dockge: bash update.sh ghcr.io/yianfri/routale:sha-COMMIT
+# Solo frontend aislado, desde su carpeta Compose: bash update.sh ghcr.io/yianfri/routale:sha-COMMIT
+# Routale con API requiere el procedimiento conjunto; este ayudante lo rechaza.
 set -euo pipefail
 image="${1:?Indica una imagen exacta}"
 if [[ ! "$image" =~ ^ghcr\.io/[a-z0-9_-]+/[a-z0-9_-]+(:sha-[a-f0-9]{40}|@sha256:[a-f0-9]{64})$ ]]; then

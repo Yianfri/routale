@@ -72,3 +72,16 @@ El formato v1 conserva campos desconocidos y fuentes originales.
 EF usa el proveedor SQLite Core con el bundle nativo SQLitePCLRaw actualizado.
 Los lockfiles fijan dependencias; restauración con auditoría y warnings como errores.
 No hay inscripción pública, recuperación de contraseña ni sincronización automática.
+
+## Verificar un almacenamiento recuperado
+
+Con la API de esa copia detenida y `Storage__Directory` apuntando al destino
+aislado, ejecutar `dotnet Bitacora.Api.dll verify-storage` con la imagen de la
+versión correspondiente. Comprueba SQLite, relaciones, esquema y archivos de
+claves sin crear la base ni aplicar migraciones. No imprime claves, cuentas ni
+contenido de viajes. La sesión y la lectura se ensayan después en la copia aislada.
+
+Ver [respaldo y recuperación operativos](../docs/public/recuperacion.md).
+El ensayo Docker usa `ROUTALE_RECOVERY_IMAGE` y `RESTIC_BINARY`, y se ejecuta con
+`npm run test:recovery` desde backend. Solo crea y elimina sus recursos ficticios;
+sin esas variables se omite. CI prepara ambos requisitos y ejecuta el ensayo.

@@ -16,7 +16,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 SQLitePCL.Batteries_V2.Init();
-var adminCommand = args is ["create-user"] or ["migrate"];
+var adminCommand = args is ["create-user"] or ["migrate"] or ["verify-storage"];
 var builder = WebApplication.CreateBuilder(adminCommand ? [] : args);
 builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
@@ -32,7 +32,25 @@ if (maxTrips <= 0 || maxBackupBytes <= 0)
 }
 
 builder.Services.AddSingleton(new StorageLimits(maxTrips, maxBackupBytes));
-var database = new Database(builder.Configuration["Storage:Directory"] ?? Path.Combine(builder.Environment.ContentRootPath, ".data"));
+var storageDirectory = builder.Configuration["Storage:Directory"] ?? Path.Combine(builder.Environment.ContentRootPath, ".data");
+if (args is ["verify-storage"])
+{
+    try
+    {
+        StorageInspection.Verify(storageDirectory);
+        Console.WriteLine("Almacenamiento verificado: integridad, relaciones, esquema y archivos de claves presentes.");
+    }
+    catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
+        or InvalidOperationException or System.Xml.XmlException or SqliteException)
+    {
+        Console.Error.WriteLine("La verificación falló. Se conserva la copia sin migrar ni registrar su contenido privado.");
+        Environment.ExitCode = 1;
+    }
+
+    return;
+}
+
+var database = new Database(storageDirectory);
 builder.Services.AddSingleton(database);
 builder.Services.AddDbContextFactory<BitacoraDbContext>(options => options.UseSqlite(database.ConnectionString));
 builder.Services.AddSingleton<IPasswordHasher<Account>, PasswordHasher<Account>>();

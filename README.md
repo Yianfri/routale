@@ -43,7 +43,7 @@ la revisión del contenido de cada cambio.
 
 ## Ejecutar
 
-Node 24.19.0 y npm. Desde `frontend/`:
+Node 24.22.1 y npm 11.21.2, la misma revisión fijada en Docker y CI. Desde `frontend/`:
 
 ```sh
 npm ci

@@ -2,6 +2,10 @@
 
 ## Estado real
 
+El [procedimiento de respaldo y recuperación](recuperacion.md) tiene un ensayo
+local con datos ficticios; su instalación y recorrido entre Linux y Windows
+siguen pendientes antes del primer despliegue con datos reales.
+
 CI de PR y main se ejecuta en máquinas de GitHub. Comprueba frontend, pruebas
 unitarias .NET, migraciones, API sobre SQLite temporal, contenido publicable y
 la imagen Nginx con sus cabeceras reales. Publicar imágenes sigue condicionado
@@ -54,6 +58,9 @@ Mantener web/proxy en loopback y API/base en la red privada de contenedores.
 Tailscale Serve ofrece HTTPS a dispositivos autorizados del tailnet, sin comprar
 un dominio propio. Android y PC deben tener Tailscale instalado y conectado,
 y las reglas de acceso deben limitar quién llega al servicio.
+Al incorporar el celular, concederle únicamente el HTTPS de Routale; mantener
+SSH y Cockpit reservados al PC administrativo. Esa ampliación se hará durante
+la preparación del acceso y la validación física, sin habilitarla en SEG-03.
 
 El enlace tendrá la forma de ejemplo `https://routale.nombre-del-tailnet.ts.net`.
 La dirección real depende del nombre del equipo y el tailnet, y se registra solo
@@ -81,11 +88,38 @@ ya instalado, la primera opción recomendada es mantener Linux y acceso privado.
 
 ## Flujo de despliegue propuesto
 
+### Desarrollo local y revisión en GitHub
+
+Los cambios pueden escribirse y probarse en el PC. Una rama local conserva los
+commits; push los publica en una rama de GitHub y una PR propone integrarlos a la
+rama base. Crear un commit o una PR no despliega Routale en el Linux.
+
+1. Revisar estado y diferencias antes de editar, conservando el trabajo existente.
+   Para separar tareas, crear una rama o un worktree desde la base acordada;
+   no limpiar el árbol ni cambiar de base perdiendo cambios locales.
+2. Implementar y comprobar localmente. Revisar el diff y preparar solo los
+   archivos de la tarea; excluir acceso SSH, datos, claves y salidas del servidor.
+3. Crear commits pequeños y ejecutar la revisión de publicación antes de push.
+   Usar una rama del repositorio propio o un fork si se contribuye a otro
+   repositorio; comprobar remoto, repositorio destino y rama base de la PR.
+4. Abrir la PR y comprobar su CI en ejecutores de GitHub. Los cambios de una PR
+   permanecen separados de la instalación del Linux hasta una versión aprobada
+   y un procedimiento de despliegue revisado.
+
+El acceso SSH se usa por separado para el [inventario de lectura](inventario-linux.md).
+No entregar claves administrativas del servidor a las pruebas de PR ni ejecutar
+allí código de forks. En el estado actual, el despliegue sigue siendo una tarea
+posterior a seguridad, procedencia y recuperación; no hay un actualizador
+integrado web/API listo para producción.
+
+### Instalación de una versión aprobada
+
 1. Trabajar en una rama y abrir PR; pruebas y compilación en GitHub.
 2. Integrar a main una versión revisada y publicar imágenes por commit/digest.
-3. Un actualizador instalado y revisado en Linux consulta una versión aprobada,
-   verifica procedencia/commit y descarga esas imágenes; no hace checkout ni
-   ejecuta instrucciones de PR, forks o scripts descargados del repositorio.
+3. En el primer despliegue, el operador verifica la procedencia y descarga las
+   dos imágenes aprobadas por digest desde Linux. No hace checkout ni ejecuta
+   instrucciones de PR, forks o scripts descargados del repositorio. El
+   actualizador local que automatizará este paso sigue pendiente de OPS-05.
 4. Detiene la API, respalda base y claves en privado y aplica [migraciones](migraciones.md)
    con el nuevo binario sobre el mismo volumen.
 5. Inicia, comprueba salud y lectura/autenticación, y registra la versión instalada.
@@ -97,11 +131,121 @@ poco después de publicar, sin credenciales de administración del Linux en GitH
 Es una propuesta pendiente de implementar y ensayar. No se afirma que exista ya
 un agente pull, verificación de procedencia ni recuperación de la API.
 
+### Dockge, Portainer y despliegue automático
+
+Para el uso actual se eligió administrar Routale mediante Compose por SSH y
+mantener Dockge detenido. La administración será ocasional; no se construirá un
+panel propio ni se instalará otro solo para montar la aplicación. Una interfaz
+de consulta podrá evaluarse después si aparece una necesidad concreta. Las
+instrucciones de operación quedan en el apartado siguiente. La receta y su
+plantilla de entorno usan una carpeta dedicada, conservando proyecto y volumen.
+
+La pila Compose de este repositorio ya define web/proxy, API y almacenamiento
+persistente. Dockge permite visualizar y administrar pilas Compose ubicadas en
+su directorio configurado; la aplicación se abre en su propio origen HTTPS, no
+en el panel de administración. Al integrar la pila, conservar el mismo proyecto,
+volumen y archivos aprobados. No administrar la misma pila simultáneamente con
+dos paneles ni editar en el servidor cambios que deban revisarse primero en Git.
+
+Portainer no es un requisito para instalar Routale o automatizar su despliegue.
+La decisión sobre el panel corresponde a SEG-03, incluido el aviso de seguridad
+pendiente de Dockge. Cambiar de panel no verifica imágenes, migra SQLite ni
+restaura copias por sí solo. En una instalación conectada al socket Docker,
+Portainer también necesita autoridad sobre ese daemon; no se considera una
+solución automática al riesgo administrativo.
+
+GitHub puede automatizar comprobaciones y publicación tras integrar a main.
+El objetivo solicitado para OPS-05 es que integrar un cambio aprobado en main
+termine en un despliegue automático en el Linux cuando la CI y las verificaciones
+de la versión pasen, sin repetir manualmente el procedimiento en cada entrega.
+Un push a una rama o una PR no autoriza ejecutar ese código en el servidor.
+Después de ensayar instalación y recuperación manuales, OPS-05 puede añadir
+un servicio local que consulte una versión aprobada, verifique procedencia,
+respalde, migre y actualice web/API juntas. Mantener una única autoridad de
+actualización: el panel observa la pila y las intervenciones manuales se coordinan
+con ese servicio. No activar webhooks, actualizaciones de etiquetas mutables o
+un runner personal como atajo al procedimiento pendiente.
+
 update.sh es un ayudante manual para el frontend aislado y rechaza el stack con API:
 descarga una imagen,
 conserva .env.previous y comprueba salud. La etiqueta/digest es inmutable, pero
 su formato no demuestra procedencia ni aprobación. No usarlo como verificador de
 versiones ni como rollback de base de datos.
+
+### Operación de Routale por Compose/SSH
+
+Routale es el nombre de la aplicación. `bitacora` es su identificador de proyecto
+Docker heredado, igual que el prefijo de configuración `BITACORA_*`; se conservan
+por compatibilidad. Su volumen de datos se llama `routale_private_data`.
+
+La preparación operativa ya se instaló por SSH en `~/routale` de la cuenta
+administrativa, sin iniciar servicios. La carpeta tiene permisos 700 y sus tres
+archivos, 600; propietario y hashes se comprobaron contra las copias locales.
+El Compose real del Linux validó el modelo y aceptó las consultas de estado y
+registros del proyecto. Contenedores, tiempos y reinicios, volúmenes y redes de
+Valheim y Dockge coinciden antes y después. El resultado y las rutas personales
+permanecen como evidencia local privada. La aplicación sigue sin desplegarse.
+
+La carpeta contiene `compose.yaml`, `.env.example` y `OPERACION.md`. Este último
+incluye los comandos de consulta que usan la plantilla en esta etapa. No existe
+un `.env` activo: se preparará para OPS-03 con las dos imágenes por digest tras
+verificar su procedencia en OPS-02. La plantilla contiene marcadores deliberados:
+no permite elegir una versión de producción sin completar ese paso. Conservar
+loopback, el nombre de proyecto `bitacora` y el volumen `routale_private_data`.
+Si se adapta la red privada para evitar una colisión, mantener coherentes subred,
+gateway, IP de web, IP de API y proxy de confianza. No cambiar nombres o redes de
+otras pilas para acomodar Routale. La carpeta y `.env` deben tener permisos solo
+para la administración autorizada; nunca guardar ese `.env` en Git.
+
+Después de preparar el `.env` activo, las imágenes y las migraciones de OPS-03,
+entrar por el alias SSH privado habitual y definir esta función en la sesión del
+Linux con la misma cuenta propietaria de la carpeta. Mantener la ruta estable.
+El proyecto se indica explícitamente para evitar depender de la carpeta actual
+o de variables de Compose heredadas:
+
+```sh
+routale_compose() {
+  docker compose \
+    --project-name bitacora \
+    --project-directory "$HOME/routale" \
+    --env-file "$HOME/routale/.env" \
+    --file "$HOME/routale/compose.yaml" "$@"
+}
+```
+
+Consultar configuración y estado sin crear recursos:
+
+```sh
+routale_compose config --quiet
+routale_compose ps --all api web
+```
+
+Consultar un número acotado de registros, manteniéndolos privados:
+
+```sh
+routale_compose logs --no-color --tail 100 api web
+```
+
+Una vez instalada y migrada la pila, un reinicio operativo de los contenedores
+existentes interrumpe brevemente las solicitudes. No descarga imágenes, aplica
+cambios de `.env` ni sustituye una migración o un despliegue:
+
+```sh
+routale_compose restart --no-deps --timeout 30 api web
+routale_compose ps --all api web
+curl --fail --silent --show-error --max-time 5 http://127.0.0.1:8088/api/health
+```
+
+Si no existen contenedores, consultar el estado e ir al procedimiento de primera
+instalación de OPS-03. No usar `up` para resolver a ciegas un volumen vacío o una
+base sin migrar. No ejecutar `down --volumes`, podas globales ni comandos sobre
+todas las pilas. Los registros y el modelo completo de Compose pueden contener
+información privada: validar con `config --quiet` y no publicar sus salidas.
+
+Cambiar versión requiere el respaldo, la migración y la recuperación descritos
+en [recuperación](recuperacion.md) y [migraciones](migraciones.md). El ayudante
+`update.sh` sigue limitado al frontend aislado. Estas instrucciones no habilitan
+OPS-05 ni requieren reactivar Dockge o iniciar Valheim.
 
 ## Ensayo Docker local conjunto
 
@@ -128,6 +272,8 @@ hacia el puerto loopback; no usar esa configuración directamente por HTTP públ
 Ver [revisión de seguridad](despliegue-seguro.md) y [migraciones](migraciones.md).
 
 Referencias: [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve),
+[pilas existentes en Dockge](https://github.com/louislam/dockge#can-i-manage-existing-stacks),
+[conexión de Portainer al socket Docker](https://docs.portainer.io/admin/environments/add/docker/socket),
 [certificados HTTPS](https://tailscale.com/docs/how-to/set-up-https-certificates),
 [Tailscale Funnel](https://tailscale.com/docs/features/tailscale-funnel),
 [seguridad de ejecutores GitHub](https://docs.github.com/en/actions/reference/security/secure-use)
