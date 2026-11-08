@@ -64,7 +64,7 @@ const allowed = (path) =>
     path,
   ) ||
   path === 'backend/src/Bitacora.Api/packages.lock.json' ||
-  /^deploy\/(compose(\.local)?\.ya?ml|nginx(?:\.local|\.stack)?\.conf|update\.sh|recovery\.mjs|\.env\.example)$/.test(
+  /^deploy\/(compose(\.local)?\.ya?ml|nginx(?:\.local|\.stack)?\.conf|update\.sh|recovery\.mjs|verify-images(?:\.test)?\.sh|\.env\.example)$/.test(
     path,
   ) ||
   /^\.github\/workflows\/(ci|deploy)\.yml$/.test(path);

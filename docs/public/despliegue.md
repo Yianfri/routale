@@ -47,9 +47,11 @@ están en [revisión de seguridad](despliegue-seguro.md); la información de acc
 permanece fuera de Git. Falta cerrar HTTPS, permisos, procedencia y recuperación.
 
 El CI prepara ambas imágenes después de las comprobaciones, incluida integración
-real de navegador/API/SQLite. Solo publica con main y ENABLE_IMAGE_PUBLISH=true;
-no despliega en Linux. Las acciones se fijan por SHA; los outputs incluyen digests,
-pero todavía falta atestación y comprobación de procedencia en el servidor.
+real de navegador/API/SQLite. Solo puede publicar desde `main` de
+`Yianfri/routale` con `ENABLE_IMAGE_PUBLISH=true`. El workflow firma los digests
+de web y API y comprueba ambas atestaciones antes de anunciar el par en el
+resumen de Actions. El primer ensayo con imágenes firmadas y la comprobación
+desde Linux siguen pendientes.
 La guía pública vigente sustituye cualquier plan anterior de ejecutor self-hosted.
 
 ## Acceso recomendado: Tailscale Serve
@@ -116,10 +118,10 @@ integrado web/API listo para producción.
 
 1. Trabajar en una rama y abrir PR; pruebas y compilación en GitHub.
 2. Integrar a main una versión revisada y publicar imágenes por commit/digest.
-3. En el primer despliegue, el operador verifica la procedencia y descarga las
-   dos imágenes aprobadas por digest desde Linux. No hace checkout ni ejecuta
-   instrucciones de PR, forks o scripts descargados del repositorio. El
-   actualizador local que automatizará este paso sigue pendiente de OPS-05.
+3. En el primer despliegue, el operador [verifica la procedencia](#verificación-de-procedencia)
+   y descarga las dos imágenes aprobadas por digest desde Linux. Usa una copia
+   revisada del verificador de la versión aprobada. El actualizador local que
+   automatizará este paso sigue pendiente de OPS-05.
 4. Detiene la API, respalda base y claves en privado y aplica [migraciones](migraciones.md)
    con el nuevo binario sobre el mismo volumen.
 5. Inicia, comprueba salud y lectura/autenticación, y registra la versión instalada.
@@ -129,7 +131,33 @@ integrado web/API listo para producción.
 Un timer local puede comprobar versiones cada minuto: actualización automática
 poco después de publicar, sin credenciales de administración del Linux en GitHub.
 Es una propuesta pendiente de implementar y ensayar. No se afirma que exista ya
-un agente pull, verificación de procedencia ni recuperación de la API.
+un agente pull ni un ensayo de recuperación de la API en el Linux.
+
+### Verificación de procedencia
+
+Elegir un commit aprobado en `main` de `Yianfri/routale` y copiar las dos
+referencias por digest del resumen de su publicación exitosa. Usar GitHub CLI
+con `gh attestation verify`, autenticado en GitHub y con acceso de lectura
+al registro GHCR. Desde una copia revisada de ese commit, ejecutar:
+
+```sh
+bash deploy/verify-images.sh "$approved_commit" "$web_ref" "$api_ref"
+```
+
+El primer valor es el SHA completo del commit aprobado. Los otros dos son
+`ghcr.io/yianfri/routale@sha256:…` y `ghcr.io/yianfri/routale-api@sha256:…`, en ese
+orden. El verificador exige atestaciones de GitHub para `ci.yml`, `main` y ese
+mismo commit, emitidas en un ejecutor alojado por GitHub. Comprueba además
+que cada nombre firmado corresponde a su digest. Un error de autenticación,
+red, firma o política detiene la comprobación.
+
+Solo si pasan las dos imágenes, usar esas referencias exactas en el `.env`
+privado. Antes de descargar, comprobar que `docker compose config --images`
+muestre exactamente ese par con el entorno elegido. Conservar juntos el SHA
+y las dos referencias para repetir la verificación al instalar o recuperar.
+
+Referencias de GitHub: [atestaciones para imágenes](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations#generating-build-provenance-for-container-images)
+y [verificación con GitHub CLI](https://cli.github.com/manual/gh_attestation_verify).
 
 ### Dockge, Portainer y despliegue automático
 

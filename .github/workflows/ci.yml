@@ -30,6 +30,9 @@ jobs:
       - run: npx prettier --check ../backend/tests/*.mjs ../backend/package.json ../global.json ../dotnet-tools.json
       - run: npx prettier --check ../deploy/recovery.mjs
       - run: node --check ../deploy/recovery.mjs
+      - name: Probar la política de procedencia de imágenes
+        working-directory: .
+        run: bash deploy/verify-images.test.sh
       - run: npm run lint
       - run: npm run typecheck:tests
       - run: npm test
@@ -137,15 +140,17 @@ jobs:
         run: node --test --test-concurrency=1 backend/tests/recovery.test.mjs
   image:
     needs: [checks, backend, integration]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.ENABLE_IMAGE_PUBLISH == 'true'
+    if: github.repository == 'Yianfri/routale' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.ENABLE_IMAGE_PUBLISH == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
     outputs:
-      web_digest: ${{ steps.web.outputs.digest }}
-      api_digest: ${{ steps.api.outputs.digest }}
+      web_digest: ${{ steps.verify.outputs.web_digest }}
+      api_digest: ${{ steps.verify.outputs.api_digest }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
@@ -189,15 +194,39 @@ jobs:
           labels: |
             org.opencontainers.image.version=${{ steps.meta.outputs.version }}
             org.opencontainers.image.revision=${{ steps.meta.outputs.revision }}
-      - name: Resumen de imágenes inmutables
+      - name: Atestar la procedencia del frontend
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ steps.meta.outputs.web_image }}
+          subject-digest: ${{ steps.web.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+      - name: Atestar la procedencia de la API
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ steps.meta.outputs.api_image }}
+          subject-digest: ${{ steps.api.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+      - name: Verificar el par antes de anunciarlo
+        id: verify
         env:
+          GH_TOKEN: ${{ github.token }}
           WEB_IMAGE: ${{ steps.meta.outputs.web_image }}
           WEB_DIGEST: ${{ steps.web.outputs.digest }}
           API_IMAGE: ${{ steps.meta.outputs.api_image }}
           API_DIGEST: ${{ steps.api.outputs.digest }}
         run: |
+          web_ref="$WEB_IMAGE@$WEB_DIGEST"
+          api_ref="$API_IMAGE@$API_DIGEST"
+          bash deploy/verify-images.sh "$GITHUB_SHA" "$web_ref" "$api_ref"
           {
-            echo '### Imágenes publicadas'
-            printf -- '- Frontend: `%s:sha-%s` — `%s`\n' "$WEB_IMAGE" "$GITHUB_SHA" "$WEB_DIGEST"
-            printf -- '- API: `%s:sha-%s` — `%s`\n' "$API_IMAGE" "$GITHUB_SHA" "$API_DIGEST"
+            printf 'web_digest=%s\n' "$WEB_DIGEST"
+            printf 'api_digest=%s\n' "$API_DIGEST"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo '### Imágenes publicadas con procedencia verificada'
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Frontend: `%s`\n' "$web_ref"
+            printf -- '- API: `%s`\n' "$api_ref"
           } >> "$GITHUB_STEP_SUMMARY"
